@@ -1,0 +1,302 @@
+#include "diff.h"
+#include "workWithFile.h"
+#include <stdlib.h>  // Добавить для calloc, free
+#include <string.h>  // Добавить для strcmp
+#include <stdio.h>   // Добавить для printf
+#include <ctype.h>   // Добавить для atof
+#include <math.h>
+
+tree_t* treeCtor(void)
+{
+    tree_t* tree = (tree_t*)calloc(1, sizeof(tree_t));
+
+    if (tree != NULL)
+    {
+        tree->size = 0;
+        tree->root = NULL;
+    }
+    return tree;
+}
+
+
+errors_t treeRecursiveDelete(node_t* node)
+{
+    if (node == NULL)
+    {
+        return SUCCESS;
+    }
+
+    treeRecursiveDelete(node->left);
+    treeRecursiveDelete(node->right);
+
+    free(node);
+
+    return SUCCESS;
+}
+
+
+//TODO верификатор
+//
+// treeError_t treeVerify(const tree_t* tree)
+// {
+//     if (tree == NULL) return TREE_ERROR_NULL_PTR;
+//     if (tree->size < 0) return TREE_ERROR_INVALID;
+//     if (tree->root == NULL && tree->size != 0) return TREE_ERROR_INVALID;
+//
+//     return TREE_SUCCESS;
+// }
+//
+//
+// const char* treeErrorToString(treeError_t error)
+// {
+//     switch(error) {
+//         case TREE_SUCCESS: return "SUCCESS";
+//         case TREE_ERROR_NULL_PTR: return "NULL_PTR";
+//         case TREE_ERROR_INVALID: return "INVALID";
+//         default: return "UNRECOGNIZED";
+//     }
+// }
+
+
+
+void setParentLinks(node_t* node, node_t* parent)
+{
+    if (node == NULL) return;
+
+    node->parent = parent;
+    setParentLinks(node->left, node);
+    setParentLinks(node->right, node);
+}
+
+
+tree_t* initializeTree(VariableTable* table)
+{
+    tree_t* tree = loadMathTree("text.txt", table);
+
+    if (tree != NULL)
+    {
+        printf("дерево успешно загружено из файла\n");
+        return tree;
+    }
+
+    tree = treeCtor();
+
+    if (tree == NULL)
+    {
+        printf("ошибка загрузки дерева\n");
+        return NULL;
+    }
+
+    printf("пустое дерево создали\n");
+    return tree;
+}
+
+
+
+
+void skipWhitespaces(const char* buffer, int* pos)
+{
+    if (buffer == NULL || pos == NULL) return;
+
+    while (buffer[*pos] == ' ' || buffer[*pos] == '\n' || buffer[*pos] == '\t' || buffer[*pos] == '\r')
+    {
+        (*pos)++;
+    }
+}
+
+
+int countTreeSize(node_t* node)
+{
+    if (node == NULL) return 0;
+    return 1 + countTreeSize(node->left) + countTreeSize(node->right);
+}
+
+
+
+
+void printAkinatorTree(const node_t* node)
+{
+    if (node == NULL)
+    {
+        printf("nil");
+        return;
+    }
+
+    switch (node->type) {
+        case NUM:
+            printf("%.2f", node->object.constant);
+            break;
+        case OP:
+            switch (node->object.operation) {
+                case ADD: printf("+"); break;
+                case SUB: printf("-"); break;
+                case MUL: printf("*"); break;
+                case DIV: printf("/"); break;
+                case SIN: printf("sin"); break;
+                case COS: printf("cos"); break;
+                case ARCSIN: printf("arcsin"); break;
+                case ARCCOS: printf("arccos"); break;
+                case TG: printf("tg"); break;
+                case CTG: printf("ctg"); break;
+                case ARCTG: printf("arctg"); break;
+                case ARCCTG: printf("arcctg"); break;
+                case LN: printf("ln"); break;
+                case RAIZE: printf("^"); break;
+                case HZ_OPERATION: printf("?"); break;
+                default: printf("?");
+            }
+            break;
+        case VAR:
+            printf("%s", node->object.var);
+            break;
+    }
+
+    printf("(");
+    printAkinatorTree(node->left);
+    printf(" ");
+    printAkinatorTree(node->right);
+    printf(")");
+}
+
+
+node_t* createTypedNode(type_t type, const char* data, node_t* leftNode, node_t* rightNode)
+{
+    node_t* newNode = (node_t*)calloc(1, sizeof(node_t));
+
+    if (newNode == NULL) return NULL;
+
+    newNode->type = type;
+
+    switch (type) {
+        case NUM:
+            newNode->object.constant = atof(data);
+            break;
+        case OP:
+            //TODO на switch заменить
+            if (strcmp("+",data) == 0) newNode->object.operation = ADD;
+            else if (strcmp("-",data) == 0) newNode->object.operation = SUB;
+            else if (strcmp("*",data) == 0) newNode->object.operation = MUL;
+            else if (strcmp("/",data) == 0) newNode->object.operation = DIV;
+            else if (strcmp("sin",data) == 0) newNode->object.operation = SIN;
+            else if (strcmp("arcsin",data) == 0) newNode->object.operation = ARCSIN;
+            else if (strcmp("cos",data) == 0) newNode->object.operation = COS;
+            else if (strcmp("arccos",data) == 0) newNode->object.operation = ARCCOS;
+            else if (strcmp("tg",data) == 0) newNode->object.operation = TG;
+            else if (strcmp("arctg",data) == 0) newNode->object.operation = ARCTG;
+            else if (strcmp("ctg",data) == 0) newNode->object.operation = CTG;
+            else if (strcmp("arcctg",data) == 0) newNode->object.operation = ARCCTG;
+            else if (strcmp("ln",data) == 0) newNode->object.operation = LN;
+            else if (strcmp("^",data) == 0) newNode->object.operation = RAIZE;
+            else newNode->object.operation = HZ_OPERATION;
+            break;
+        case VAR:
+            if (data[0] != '\0') newNode->object.var = strdup(data);
+            break;
+    }
+
+    newNode->left = leftNode;
+    newNode->right = rightNode;
+    newNode->parent = NULL;
+
+    return newNode;
+}
+
+
+double countingTree(node_t* node, VariableTable* table)
+{
+    if (node == NULL) return 777;
+
+    if (node->type == NUM)
+    {
+        return node->object.constant;
+    }
+    else if (node->type == VAR) {
+        for (int i = 0; i < table->count; i++)
+        {
+            if (table->variables[i].isDefined && strcmp(table->variables[i].name, node->object.var) == 0)
+            {
+                return table->variables[i].value;
+            }
+        }
+        printf("Ошибка: переменная %s не определена\n", node->object.var);
+        return 777;
+    }
+    else if (node->type == OP) {
+        double first = countingTree(node->left, table);
+        double second = 0;
+        if (node->right != NULL)
+        {
+            second = countingTree(node->right, table);
+        }
+
+        switch (node->object.operation) {
+            case ADD: return first + second;
+            case SUB: return first - second;
+            case MUL: return first * second;
+            case DIV: return first / second;
+            case SIN: return sin(first);
+            case COS: return cos(first);
+            case TG: return tan(first);
+            case ARCSIN: return asin(first);
+            case ARCCOS: return acos(first);
+            case ARCTG: return atan(first);
+            case ARCCTG: return PI_2 - atan(first);
+            case CTG: return 1.0 / tan(first);
+            case RAIZE:
+                return pow(first, second);
+            default:
+                printf("неизвестная операция");
+                return 777;
+        }
+    }
+}
+
+
+void initVariableTable(VariableTable* table, int initialCapacity)
+{
+    table->variables = (variable_t*)calloc(initialCapacity, sizeof(variable_t));
+
+    table->count = 0;
+    table->capacity = initialCapacity;
+}
+
+
+variable_t* findVarInTable(VariableTable* table, char* name)                        // если не находим то создаем - нам это нужно когда мы считываем текстовик
+{
+    for (int i = 0; i < table->count; i++)
+    {
+        if (strcmp(table->variables[i].name, name) == 0)
+        {
+            return &table->variables[i];
+        }
+    }
+
+    if (table->count >= table->capacity)
+    {
+        table->capacity *= 2;
+        table->variables = (variable_t*)realloc(table->variables, table->capacity * sizeof(variable_t));
+    }
+
+    int pointer = table->count++;
+
+    variable_t* newVariable = &table->variables[pointer];
+
+    newVariable->name = strdup(name);
+    newVariable->value = 0;
+    newVariable->isDefined = false;
+
+    return newVariable;
+}
+
+
+void deleteTable(VariableTable* table)
+{
+    for (int i = 0; i < table->count; i++)
+    {
+        free(table->variables[i].name);
+    }
+
+    free(table->variables);
+    table->count = 0;
+    table->capacity = 0;
+}
