@@ -6,7 +6,10 @@
 
 
 void nodeToLatex(node_t* node, FILE* tex_file);
-void treeToLatexFile(tree_t* tree, VariableTable* table, const char* filename);
+void formulaToLatex(tree_t* tree, FILE* tex_file, const char* title);
+void formulaWithComputationToLatex(tree_t* tree, VariableTable* table, FILE* tex_file, const char* title);
+void variablesTableToLatex(VariableTable* table, FILE* tex_file);
+void createFullReport(tree_t* original, tree_t* simplified, tree_t* derivative, VariableTable* table, const char* filename);
 
 
 #endif

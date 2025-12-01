@@ -15,5 +15,5 @@ g++ -D_DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ \
     -fno-omit-frame-pointer -Wlarger-than=8192 -fPIE -Werror=vla \
     -fsanitize=address,undefined \
     -I../include \
-    main.cpp workWithFile.cpp diff.cpp dump.cpp toLatex.cpp proizv.cpp\
+    main.cpp workWithFile.cpp diff.cpp dump.cpp toLatex.cpp proizv.cpp simply.cpp\
     -o diff

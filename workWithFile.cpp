@@ -1,172 +1,172 @@
 #include "workWithFile.h"
 #include "diff.h"
 #include <ctype.h>
-// #include "akinator.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+static const char* s = NULL;
+static VariableTable* current_table = NULL;
 
+// N - number ; E - expression ; T - term symbol ; P - выражение со скобками снаружи; F - function
 
-node_t* loadNodeMathExpressionFromBuffer(const char* buffer, int* pos, tree_t* tree, VariableTable* table)
+node_t* getN()
 {
-    if (buffer == NULL || pos == NULL) return NULL;
+    double val = 0;
 
-    skipWhitespaces(buffer, pos);
-
-    if (strncmp(&buffer[*pos], "nil", 3) == 0)
+    while ('0' <= *s && *s <= '9')
     {
-        (*pos) += 3;
-        return NULL;
+        val = (val * 10) + (*s - '0');
+        s++;
     }
 
-    if (buffer[*pos] == '(')
-    {
-        (*pos)++;
-        skipWhitespaces(buffer, pos);
-
-        if (isdigit(buffer[*pos]) || (buffer[*pos] == '-' && isdigit(buffer[(*pos) + 1])))
-        {
-            char numberStr[256] = {0};
-            int i = 0;
-
-            if (buffer[*pos] == '-')
-            {
-                numberStr[i++] = '-';
-                (*pos)++;
-            }
-
-            while (isdigit(buffer[*pos]) || buffer[*pos] == '.')
-            {
-                numberStr[i++] = buffer[*pos];
-                (*pos)++;
-            }
-            numberStr[i] = '\0';
-
-            node_t* node = createTypedNode(NUM, numberStr, NULL, NULL);
-
-            skipWhitespaces(buffer, pos);
-
-            node->left = loadNodeMathExpressionFromBuffer(buffer, pos, tree, table);
-            skipWhitespaces(buffer, pos);
-            node->right = loadNodeMathExpressionFromBuffer(buffer, pos, tree, table);
-            skipWhitespaces(buffer, pos);
-
-            if (buffer[*pos] == ')')
-            {
-                (*pos)++;
-            }
-
-            return node;
-        }
-
-        if (buffer[*pos] == '+' || (buffer[*pos] == '-' && !isdigit(buffer[*pos+1])) ||
-            buffer[*pos] == '*' || buffer[*pos] == '/' || buffer[*pos] == '^')
-        {
-            char temp[2] = "";
-            temp[0] = buffer[*pos];
-
-            (*pos)++;
-            skipWhitespaces(buffer, pos);
-
-            node_t* left = loadNodeMathExpressionFromBuffer(buffer, pos, tree, table);
-            skipWhitespaces(buffer, pos);
-
-            node_t* right = loadNodeMathExpressionFromBuffer(buffer, pos, tree, table);
-
-            node_t* node = createTypedNode(OP, temp, left, right);
-
-            skipWhitespaces(buffer, pos);
-
-            if (buffer[*pos] == ')')
-            {
-                (*pos)++;
-            }
-
-            return node;
-        }
-
-        if (isalpha(buffer[*pos]))
-        {
-            char alphaStr[256] = {0};
-            int i = 0;
-
-            while (isalpha(buffer[*pos]))
-            {
-                alphaStr[i] = buffer[*pos];
-                (*pos)++;
-                i++;
-            }
-            alphaStr[i] = '\0';
-
-            if (strcmp(alphaStr, "sin") == 0 || strcmp(alphaStr, "cos") == 0 ||
-                strcmp(alphaStr, "tg") == 0 || strcmp(alphaStr, "arcsin") == 0 ||
-                strcmp(alphaStr, "arccos") == 0 || strcmp(alphaStr, "arctg") == 0 ||
-                strcmp(alphaStr, "ln") == 0 || strcmp(alphaStr, "ctg") == 0 ||
-                strcmp(alphaStr, "arcctg") == 0)
-            {
-                node_t* node = createTypedNode(OP, alphaStr, NULL, NULL);
-
-                skipWhitespaces(buffer, pos);
-                node->left = loadNodeMathExpressionFromBuffer(buffer, pos, tree, table);
-                node->right = NULL;
-
-                skipWhitespaces(buffer, pos);
-
-                if (buffer[*pos] == ')')
-                {
-                    (*pos)++;
-                }
-
-                return node;
-            }
-
-            node_t* node = createTypedNode(VAR, alphaStr, NULL, NULL);
-            findVarInTable(table, alphaStr);
-
-            skipWhitespaces(buffer, pos);
-
-            node->left = loadNodeMathExpressionFromBuffer(buffer, pos, tree, table);
-            skipWhitespaces(buffer, pos);
-            node->right = loadNodeMathExpressionFromBuffer(buffer, pos, tree, table);
-            skipWhitespaces(buffer, pos);
-
-            if (buffer[*pos] == ')')
-            {
-                (*pos)++;
-            }
-
-            return node;
-        }
-    }
-
-    printf("Ошибка: нераспознанный символ '%c' на позиции %d\n", buffer[*pos], *pos);
-    return NULL;
+    return createNumNode(val);
 }
 
+node_t* getE()                      // отвечает за сложение и вычитание
+{
+    node_t* val = getT();
+
+    while (*s == '+' || *s == '-')
+    {
+        char op = *s;
+        s++;
+        node_t* val2 = getT();
+        if (op == '+')
+        {
+            val = createTypedNode(OP, "+", val, val2);
+        }
+        else {
+            val = createTypedNode(OP, "-", val, val2);
+        }
+    }
+    return val;
+}
+
+node_t* getT()                              // отвечает за умножение и деление
+{
+    node_t* val = getP();
+
+    while (*s == '*' || *s == '/')
+    {
+        char op = *s;
+        s++;
+        node_t* val2 = getP();
+        if (op == '*')
+        {
+            val = createTypedNode(OP, "*", val, val2);
+        }
+        else {
+            val = createTypedNode(OP, "/", val, val2);
+        }
+    }
+    return val;
+}
+
+node_t* getF()                                  // отвечает за индикаторы и функции
+{
+    char funcName[MAX_NAME_LEN] = {0};
+    int i = 0;
+
+    while (isalpha(*s))
+    {
+        funcName[i++] = *s;
+        s++;
+    }
+    funcName[i] = '\0';
+
+    if (strcmp(funcName, "sin") == 0 || strcmp(funcName, "cos") == 0 ||
+        strcmp(funcName, "tg") == 0 || strcmp(funcName, "ctg") == 0 ||
+        strcmp(funcName, "arcsin") == 0 || strcmp(funcName, "arccos") == 0 ||
+        strcmp(funcName, "arctg") == 0 || strcmp(funcName, "arcctg") == 0 ||
+        strcmp(funcName, "ln") == 0 || strcmp(funcName, "sqrt") == 0 ||
+        strcmp(funcName, "sh") == 0 || strcmp(funcName, "ch") == 0 ||
+        strcmp(funcName, "th") == 0 || strcmp(funcName, "cth") == 0)
+
+    {
+
+        if (*s == '(')
+        {
+            s++;
+            node_t* arg = getE();
+            if (*s == ')')
+            {
+                s++;
+            } else {
+                printf("ожидалась ')' после %s\n", funcName);
+            }
+            return createTypedNode(OP, funcName, arg, NULL);
+        }
+    }
+
+    findVarInTable(current_table, funcName);
+
+    return createTypedNode(VAR, funcName, NULL, NULL);
+}
+
+node_t* getP()                                      // отвечает за первичные выражения
+{
+    if (*s == '(')
+    {
+        s++;
+        node_t* val = getE();
+        if (*s == ')')
+        {
+            s++;
+        } else {
+            printf("Ошибка: ожидалась ')'\n");
+        }
+        return val;
+    }
+    else if (isalpha(*s))
+    {
+        return getF();
+    }
+    else
+    {
+        return getN();
+    }
+}
+
+node_t* getG()                  // главная функция вызывающая
+{
+    node_t* val = getE();
+
+    if (*s != '$' && *s != '\0')
+    {
+        printf("Ошибка: неожиданный символ '%c' в конце\n", *s);
+    }
+
+    return val;
+}
 
 tree_t* loadMathTree(const char* filename, VariableTable* table)
 {
     FILE* file = fopen(filename, "r");
+    if (!file) {
+        printf("Ошибка: не удалось открыть файл %s\n", filename);
+        return NULL;
+    }
 
     fseek(file, 0, SEEK_END);
     long file_size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    char* buffer = (char*)calloc(file_size + 1, sizeof(char));
-
+    char* buffer = (char*)calloc(file_size + 2, sizeof(char));
     size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
+    fclose(file);
 
     if (bytes_read != file_size)
     {
-        printf("Ошибка: прочитано %zu байт вместо %ld\n", bytes_read, file_size);
+        printf("Ошибка чтения файла\n");
         free(buffer);
-        fclose(file);
         return NULL;
     }
 
     buffer[file_size] = '\0';
-    fclose(file);
+
+    s = buffer;
+    current_table = table;
 
     tree_t* tree = treeCtor();
     if (tree == NULL)
@@ -176,9 +176,15 @@ tree_t* loadMathTree(const char* filename, VariableTable* table)
         return NULL;
     }
 
-    int current_position = 0;
+    tree->root = getG();
 
-    tree->root = loadNodeMathExpressionFromBuffer(buffer, &current_position, tree, table);
+    if (tree->root == NULL)
+    {
+        printf("Ошибка: не удалось распарсить выражение\n");
+        free(buffer);
+        free(tree);
+        return NULL;
+    }
 
     free(buffer);
 

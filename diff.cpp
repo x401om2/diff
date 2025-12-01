@@ -1,10 +1,11 @@
 #include "diff.h"
 #include "workWithFile.h"
-#include <stdlib.h>  // Добавить для calloc, free
-#include <string.h>  // Добавить для strcmp
-#include <stdio.h>   // Добавить для printf
-#include <ctype.h>   // Добавить для atof
+#include <stdlib.h>  // calloc, free
+#include <string.h>  // strcmp
+#include <stdio.h>
+#include <ctype.h>   // atof
 #include <math.h>
+
 
 tree_t* treeCtor(void)
 {
@@ -33,29 +34,6 @@ errors_t treeRecursiveDelete(node_t* node)
 
     return SUCCESS;
 }
-
-
-//TODO верификатор
-//
-// treeError_t treeVerify(const tree_t* tree)
-// {
-//     if (tree == NULL) return TREE_ERROR_NULL_PTR;
-//     if (tree->size < 0) return TREE_ERROR_INVALID;
-//     if (tree->root == NULL && tree->size != 0) return TREE_ERROR_INVALID;
-//
-//     return TREE_SUCCESS;
-// }
-//
-//
-// const char* treeErrorToString(treeError_t error)
-// {
-//     switch(error) {
-//         case TREE_SUCCESS: return "SUCCESS";
-//         case TREE_ERROR_NULL_PTR: return "NULL_PTR";
-//         case TREE_ERROR_INVALID: return "INVALID";
-//         default: return "UNRECOGNIZED";
-//     }
-// }
 
 
 
@@ -112,8 +90,6 @@ int countTreeSize(node_t* node)
 }
 
 
-
-
 void printAkinatorTree(const node_t* node)
 {
     if (node == NULL)
@@ -128,22 +104,27 @@ void printAkinatorTree(const node_t* node)
             break;
         case OP:
             switch (node->object.operation) {
-                case ADD: printf("+"); break;
-                case SUB: printf("-"); break;
-                case MUL: printf("*"); break;
-                case DIV: printf("/"); break;
-                case SIN: printf("sin"); break;
-                case COS: printf("cos"); break;
-                case ARCSIN: printf("arcsin"); break;
-                case ARCCOS: printf("arccos"); break;
-                case TG: printf("tg"); break;
-                case CTG: printf("ctg"); break;
-                case ARCTG: printf("arctg"); break;
-                case ARCCTG: printf("arcctg"); break;
-                case LN: printf("ln"); break;
-                case RAIZE: printf("^"); break;
-                case HZ_OPERATION: printf("?"); break;
-                default: printf("?");
+                case ADD:               printf("+"); break;
+                case SUB:               printf("-"); break;
+                case MUL:               printf("*"); break;
+                case DIV:               printf("/"); break;
+                case SIN:               printf("sin"); break;
+                case COS:               printf("cos"); break;
+                case ARCSIN:            printf("arcsin"); break;
+                case ARCCOS:            printf("arccos"); break;
+                case TG:                printf("tg"); break;
+                case CTG:               printf("ctg"); break;
+                case ARCTG:             printf("arctg"); break;
+                case ARCCTG:            printf("arcctg"); break;
+                case LN:                printf("ln"); break;
+                case RAIZE:             printf("^"); break;
+                case SQRT:              printf("sqrt"); break;
+                case HZ_OPERATION:      printf("?"); break;
+                case SH:                printf("sh"); break;
+                case CH:                printf("ch"); break;
+                case TH:                printf("th"); break;
+                case CTH:               printf("cth"); break;
+                default:                printf("?");
             }
             break;
         case VAR:
@@ -159,6 +140,18 @@ void printAkinatorTree(const node_t* node)
 }
 
 
+node_t* createNumNode(double value)
+{
+    node_t* newNode = (node_t*)calloc(1, sizeof(node_t));
+
+    newNode->type = NUM;
+    newNode->left = NULL;
+    newNode->right = NULL;
+    newNode->object.constant = value;
+
+    return newNode;
+}
+
 node_t* createTypedNode(type_t type, const char* data, node_t* leftNode, node_t* rightNode)
 {
     node_t* newNode = (node_t*)calloc(1, sizeof(node_t));
@@ -168,25 +161,26 @@ node_t* createTypedNode(type_t type, const char* data, node_t* leftNode, node_t*
     newNode->type = type;
 
     switch (type) {
-        case NUM:
-            newNode->object.constant = atof(data);
-            break;
         case OP:
-            //TODO на switch заменить
-            if (strcmp("+",data) == 0) newNode->object.operation = ADD;
-            else if (strcmp("-",data) == 0) newNode->object.operation = SUB;
-            else if (strcmp("*",data) == 0) newNode->object.operation = MUL;
-            else if (strcmp("/",data) == 0) newNode->object.operation = DIV;
-            else if (strcmp("sin",data) == 0) newNode->object.operation = SIN;
-            else if (strcmp("arcsin",data) == 0) newNode->object.operation = ARCSIN;
-            else if (strcmp("cos",data) == 0) newNode->object.operation = COS;
-            else if (strcmp("arccos",data) == 0) newNode->object.operation = ARCCOS;
-            else if (strcmp("tg",data) == 0) newNode->object.operation = TG;
-            else if (strcmp("arctg",data) == 0) newNode->object.operation = ARCTG;
-            else if (strcmp("ctg",data) == 0) newNode->object.operation = CTG;
-            else if (strcmp("arcctg",data) == 0) newNode->object.operation = ARCCTG;
-            else if (strcmp("ln",data) == 0) newNode->object.operation = LN;
-            else if (strcmp("^",data) == 0) newNode->object.operation = RAIZE;
+            if (strcmp("+",data) == 0)              newNode->object.operation = ADD;
+            else if (strcmp("-",data) == 0)         newNode->object.operation = SUB;
+            else if (strcmp("*",data) == 0)         newNode->object.operation = MUL;
+            else if (strcmp("/",data) == 0)         newNode->object.operation = DIV;
+            else if (strcmp("sin",data) == 0)       newNode->object.operation = SIN;
+            else if (strcmp("arcsin",data) == 0)    newNode->object.operation = ARCSIN;
+            else if (strcmp("cos",data) == 0)       newNode->object.operation = COS;
+            else if (strcmp("arccos",data) == 0)    newNode->object.operation = ARCCOS;
+            else if (strcmp("tg",data) == 0)        newNode->object.operation = TG;
+            else if (strcmp("arctg",data) == 0)     newNode->object.operation = ARCTG;
+            else if (strcmp("ctg",data) == 0)       newNode->object.operation = CTG;
+            else if (strcmp("arcctg",data) == 0)    newNode->object.operation = ARCCTG;
+            else if (strcmp("ln",data) == 0)        newNode->object.operation = LN;
+            else if (strcmp("^",data) == 0)         newNode->object.operation = RAIZE;
+            else if (strcmp("sqrt",data) == 0)      newNode->object.operation = SQRT;
+            else if (strcmp("sh",data) == 0)        newNode->object.operation = SH;
+            else if (strcmp("ch",data) == 0)        newNode->object.operation = CH;
+            else if (strcmp("th",data) == 0)        newNode->object.operation = TH;
+            else if (strcmp("cth",data) == 0)       newNode->object.operation = CTH;
             else newNode->object.operation = HZ_OPERATION;
             break;
         case VAR:
@@ -224,6 +218,7 @@ double countingTree(node_t* node, VariableTable* table)
     else if (node->type == OP) {
         double first = countingTree(node->left, table);
         double second = 0;
+
         if (node->right != NULL)
         {
             second = countingTree(node->right, table);
@@ -233,24 +228,69 @@ double countingTree(node_t* node, VariableTable* table)
             case ADD: return first + second;
             case SUB: return first - second;
             case MUL: return first * second;
-            case DIV: return first / second;
+            case DIV:
+                if (second == 0) {
+                    printf("Ошибка: деление на ноль\n");
+                    return 777;
+                }
+                return first / second;
             case SIN: return sin(first);
             case COS: return cos(first);
             case TG: return tan(first);
-            case ARCSIN: return asin(first);
-            case ARCCOS: return acos(first);
+            case CTG:
+                if (tan(first) == 0) {
+                    printf("Ошибка: котангенс не определен\n");
+                    return 777;
+                }
+                return 1.0 / tan(first);
+            case ARCSIN:
+                if (first < -1 || first > 1) {
+                    printf("Ошибка: арксинус не определен для значения %f\n", first);
+                    return 777;
+                }
+                return asin(first);
+            case ARCCOS:
+                if (first < -1 || first > 1) {
+                    printf("Ошибка: арккосинус не определен для значения %f\n", first);
+                    return 777;
+                }
+                return acos(first);
             case ARCTG: return atan(first);
             case ARCCTG: return PI_2 - atan(first);
-            case CTG: return 1.0 / tan(first);
+            case LN:
+                if (first <= 0) {
+                    printf("Ошибка: логарифм не определен для значения %f\n", first);
+                    return 777;
+                }
+                return log(first);
+            case SQRT:
+                if (first < 0) {
+                    printf("Ошибка: квадратный корень не определен для отрицательного значения %f\n", first);
+                    return 777;
+                }
+                return sqrt(first);
             case RAIZE:
+                // Проверка на возведение отрицательного числа в дробную степень
+                if (first < 0 && floor(second) != second) {
+                    printf("Ошибка: возведение отрицательного числа в дробную степень\n");
+                    return 777;
+                }
                 return pow(first, second);
+            case SH: return sinh(first);
+            case CH: return cosh(first);
+            case TH: return tanh(first);
+            case CTH:
+                if (tanh(first) == 0) {
+                    printf("Ошибка: гиперболический котангенс не определен\n");
+                    return 777;
+                }
+                return 1.0 / tanh(first);
             default:
                 printf("неизвестная операция");
                 return 777;
         }
     }
 }
-
 
 void initVariableTable(VariableTable* table, int initialCapacity)
 {

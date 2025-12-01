@@ -29,6 +29,11 @@ const char* getNodeValueString(const node_t* node)
                 case CTG: return "ctg";
                 case ARCCTG: return "arcctg";
                 case RAIZE: return "^";
+                case SQRT: return "sqrt";
+                case SH: return "sh";
+                case CH: return "ch";
+                case TH: return "th";
+                case CTH: return "cth";
                 case HZ_OPERATION: return "?";
                 default: return "?";
             }
@@ -41,6 +46,7 @@ const char* getNodeValueString(const node_t* node)
     }
     return buffer;
 }
+
 
 void generateDotNodes(FILE* dotFile, const node_t* node, int* nodeCounter)
 {
@@ -86,6 +92,7 @@ void generateDotNodes(FILE* dotFile, const node_t* node, int* nodeCounter)
     }
 }
 
+
 void treeGraphDump(const tree_t* tree, const char* filename)
 {
     if (tree == NULL) return;
@@ -124,6 +131,7 @@ void treeGraphDump(const tree_t* tree, const char* filename)
     printf("Expression tree dump saved to %s\n", pngFilename);
 }
 
+
 void fullTreeDump(const tree_t* tree, const char* title)
 {
     if (tree == NULL) return;
@@ -142,6 +150,7 @@ void fullTreeDump(const tree_t* tree, const char* title)
     appendTreeHTMReport(tree, title, dumpCounter, filename);
 }
 
+
 void initMathDebugHTM()
 {
     FILE* htm = fopen("math_debug.html", "w");
@@ -154,6 +163,7 @@ void initMathDebugHTM()
         fclose(htm);
     }
 }
+
 
 void appendTreeHTMReport(const tree_t* tree, const char* title, int dumpCounter, const char* filename)
 {

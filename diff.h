@@ -49,6 +49,11 @@ enum operations_t                   // типы операций которые 
     ARCCTG = 12,
     LN = 13,
     RAIZE = 14,
+    SQRT = 15,
+    SH = 16,    // гиперболический синус
+    CH = 17,    // гиперболический косинус
+    TH = 18,    // гиперболический тангенс
+    CTH = 19    // гиперболический котангенс
 };
 
 union object_t                               // как дед говорил в union тип заключить типы которые могут быть у узла
@@ -75,19 +80,13 @@ struct node_t {
     node_t* parent;
 };
 
-// Объявляем структуру tree_t
+
 typedef struct tree_t tree_t;
 
 struct tree_t {
     node_t* array_data;
     node_t* root;
     char* arrayOfVars;
-    size_t size;
-};
-
-
-struct inputFile_t {
-    char* data;
     size_t size;
 };
 
@@ -118,7 +117,10 @@ tree_t* initializeTree(VariableTable* table);
 
 void printAkinatorTree(const node_t* node);
 
+void deleteTable(VariableTable* table);
+
 node_t* createTypedNode(type_t type, const char* data, node_t* leftNode, node_t* rightNode);
+node_t* createNumNode(double value);
 
 
 double countingTree(node_t* node, VariableTable* table);

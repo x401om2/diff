@@ -3,6 +3,7 @@
 
 
 tree_t* diffTree(const tree_t* tree, VariableTable* table, const char* var);
+
 node_t* diffNode(node_t* node, const char* var, VariableTable* table);
 node_t* differenciateOperation(node_t* node, VariableTable* table, const char* var);
 
