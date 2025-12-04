@@ -1,5 +1,5 @@
-#include "diff.h"
-#include "workWithFile.h"
+#include "../INCLUDES/diff.h"
+#include "../INCLUDES/workWithFile.h"
 #include <stdlib.h>  // calloc, free
 #include <string.h>  // strcmp
 #include <stdio.h>
@@ -47,31 +47,6 @@ void setParentLinks(node_t* node, node_t* parent)
 }
 
 
-tree_t* initializeTree(VariableTable* table)
-{
-    tree_t* tree = loadMathTree("text.txt", table);
-
-    if (tree != NULL)
-    {
-        printf("дерево успешно загружено из файла\n");
-        return tree;
-    }
-
-    tree = treeCtor();
-
-    if (tree == NULL)
-    {
-        printf("ошибка загрузки дерева\n");
-        return NULL;
-    }
-
-    printf("пустое дерево создали\n");
-    return tree;
-}
-
-
-
-
 void skipWhitespaces(const char* buffer, int* pos)
 {
     if (buffer == NULL || pos == NULL) return;
@@ -90,7 +65,7 @@ int countTreeSize(node_t* node)
 }
 
 
-void printAkinatorTree(const node_t* node)
+void printAkinatorTree(const node_t* node)                  // это просто для печатания дерева в терминале
 {
     if (node == NULL)
     {
@@ -238,19 +213,22 @@ double countingTree(node_t* node, VariableTable* table)
             case COS: return cos(first);
             case TG: return tan(first);
             case CTG:
-                if (tan(first) == 0) {
+                if (tan(first) == 0)
+                {
                     printf("Ошибка: котангенс не определен\n");
                     return 777;
                 }
                 return 1.0 / tan(first);
             case ARCSIN:
-                if (first < -1 || first > 1) {
+                if (first < -1 || first > 1)
+                {
                     printf("Ошибка: арксинус не определен для значения %f\n", first);
                     return 777;
                 }
                 return asin(first);
             case ARCCOS:
-                if (first < -1 || first > 1) {
+                if (first < -1 || first > 1)
+                {
                     printf("Ошибка: арккосинус не определен для значения %f\n", first);
                     return 777;
                 }
@@ -258,20 +236,22 @@ double countingTree(node_t* node, VariableTable* table)
             case ARCTG: return atan(first);
             case ARCCTG: return PI_2 - atan(first);
             case LN:
-                if (first <= 0) {
+                if (first <= 0)
+                {
                     printf("Ошибка: логарифм не определен для значения %f\n", first);
                     return 777;
                 }
                 return log(first);
             case SQRT:
-                if (first < 0) {
+                if (first < 0)
+                {
                     printf("Ошибка: квадратный корень не определен для отрицательного значения %f\n", first);
                     return 777;
                 }
                 return sqrt(first);
             case RAIZE:
-                // Проверка на возведение отрицательного числа в дробную степень
-                if (first < 0 && floor(second) != second) {
+                if (first < 0 && floor(second) != second)                                       // проверяем возведение отриц числа в дробную степень - floor функция округления вниз
+                {
                     printf("Ошибка: возведение отрицательного числа в дробную степень\n");
                     return 777;
                 }
@@ -280,7 +260,8 @@ double countingTree(node_t* node, VariableTable* table)
             case CH: return cosh(first);
             case TH: return tanh(first);
             case CTH:
-                if (tanh(first) == 0) {
+                if (tanh(first) == 0)
+                {
                     printf("Ошибка: гиперболический котангенс не определен\n");
                     return 777;
                 }
@@ -340,3 +321,4 @@ void deleteTable(VariableTable* table)
     table->count = 0;
     table->capacity = 0;
 }
+

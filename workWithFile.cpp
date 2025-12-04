@@ -1,17 +1,31 @@
-#include "workWithFile.h"
-#include "diff.h"
+#include "../INCLUDES/workWithFile.h"
+#include "../INCLUDES/diff.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../INCLUDES/DSL.h"
 
 static const char* s = NULL;
 static VariableTable* current_table = NULL;
 
 // N - number ; E - expression ; T - term symbol ; P - выражение со скобками снаружи; F - function
 
-node_t* getN()
+
+static void skipSpacesParser()
 {
+    if (s == NULL) return;
+
+    while (*s == ' ' || *s == '\n' || *s == '\t' || *s == '\r')
+    {
+        s++;
+    }
+}
+
+
+node_t* getNumber()
+{
+    skipSpacesParser();
     double val = 0;
 
     while ('0' <= *s && *s <= '9')
@@ -20,51 +34,89 @@ node_t* getN()
         s++;
     }
 
-    return createNumNode(val);
+    skipSpacesParser();
+
+    return NUM_(val);
 }
 
-node_t* getE()                      // отвечает за сложение и вычитание
+node_t* getExpression()                                             // отвечает за сложение и вычитание
 {
-    node_t* val = getT();
+    skipSpacesParser();
+    node_t* val = getTerm();
 
     while (*s == '+' || *s == '-')
     {
         char op = *s;
         s++;
-        node_t* val2 = getT();
+
+        skipSpacesParser();
+
+        node_t* val2 = getTerm();
         if (op == '+')
         {
-            val = createTypedNode(OP, "+", val, val2);
+            val = ADD_(val, val2);
         }
         else {
-            val = createTypedNode(OP, "-", val, val2);
+            val = SUB_(val, val2);
         }
     }
+
+    skipSpacesParser();
     return val;
 }
 
-node_t* getT()                              // отвечает за умножение и деление
+node_t* getTerm()                              // отвечает за умножение и деление
 {
-    node_t* val = getP();
+    skipSpacesParser();
+    node_t* val = getPower();
 
+    skipSpacesParser();
     while (*s == '*' || *s == '/')
     {
         char op = *s;
         s++;
-        node_t* val2 = getP();
+
+        skipSpacesParser();
+        node_t* val2 = getPower();
         if (op == '*')
         {
-            val = createTypedNode(OP, "*", val, val2);
+            val = MUL_(val, val2);
         }
         else {
-            val = createTypedNode(OP, "/", val, val2);
+            val = DIV_(val, val2);
         }
+        skipSpacesParser();
     }
+
+    skipSpacesParser();
     return val;
 }
 
-node_t* getF()                                  // отвечает за индикаторы и функции
+
+node_t* getPower()
 {
+    skipSpacesParser();
+    node_t* val = getPrimary();
+
+    skipSpacesParser();
+    if (*s == '^')
+    {
+        s++;
+        skipSpacesParser();
+
+        node_t* exponent = getPower();
+        val = POW_(val, exponent);
+    }
+
+    skipSpacesParser();
+    return val;
+}
+
+
+node_t* getFunction()                                  // отвечает за индикаторы и функции
+{
+    skipSpacesParser();
+
     char funcName[MAX_NAME_LEN] = {0};
     int i = 0;
 
@@ -74,6 +126,7 @@ node_t* getF()                                  // отвечает за инд�
         s++;
     }
     funcName[i] = '\0';
+    skipSpacesParser();
 
     if (strcmp(funcName, "sin") == 0 || strcmp(funcName, "cos") == 0 ||
         strcmp(funcName, "tg") == 0 || strcmp(funcName, "ctg") == 0 ||
@@ -88,7 +141,11 @@ node_t* getF()                                  // отвечает за инд�
         if (*s == '(')
         {
             s++;
-            node_t* arg = getE();
+            skipSpacesParser();
+
+            node_t* arg = getExpression();
+
+            skipSpacesParser();
             if (*s == ')')
             {
                 s++;
@@ -101,15 +158,37 @@ node_t* getF()                                  // отвечает за инд�
 
     findVarInTable(current_table, funcName);
 
-    return createTypedNode(VAR, funcName, NULL, NULL);
+    return VAR_(funcName);
 }
 
-node_t* getP()                                      // отвечает за первичные выражения
+node_t* getPrimary()                                      // отвечает за первичные выражения
 {
+    skipSpacesParser();
+
+    if (*s == '-')
+    {
+        s++;
+        skipSpacesParser();
+
+        node_t* val = getPrimary();
+        return MUL_(NUM_(-1), val);
+    }
+
+    if (*s == '+')
+    {
+        s++;
+        skipSpacesParser();
+        return getPrimary();
+    }
+
     if (*s == '(')
     {
         s++;
-        node_t* val = getE();
+        skipSpacesParser();
+
+        node_t* val = getExpression();
+
+        skipSpacesParser();
         if (*s == ')')
         {
             s++;
@@ -120,21 +199,24 @@ node_t* getP()                                      // отвечает за п�
     }
     else if (isalpha(*s))
     {
-        return getF();
+        return getFunction();
     }
     else
     {
-        return getN();
+        return getNumber();
     }
 }
 
-node_t* getG()                  // главная функция вызывающая
+node_t* getGrammar()                                                        // главная функция вызывающая
 {
-    node_t* val = getE();
+    skipSpacesParser();
+    node_t* val = getExpression();
+
+    skipSpacesParser();
 
     if (*s != '$' && *s != '\0')
     {
-        printf("Ошибка: неожиданный символ '%c' в конце\n", *s);
+        printf("ваырнинг бляттть: неожиданный символ '%c' в конце\n", *s);
     }
 
     return val;
@@ -143,7 +225,9 @@ node_t* getG()                  // главная функция вызываю�
 tree_t* loadMathTree(const char* filename, VariableTable* table)
 {
     FILE* file = fopen(filename, "r");
-    if (!file) {
+
+    if (!file)
+    {
         printf("Ошибка: не удалось открыть файл %s\n", filename);
         return NULL;
     }
@@ -165,7 +249,7 @@ tree_t* loadMathTree(const char* filename, VariableTable* table)
 
     buffer[file_size] = '\0';
 
-    s = buffer;
+    s = buffer;                             // как раз то что сверху задали изменяем
     current_table = table;
 
     tree_t* tree = treeCtor();
@@ -176,7 +260,7 @@ tree_t* loadMathTree(const char* filename, VariableTable* table)
         return NULL;
     }
 
-    tree->root = getG();
+    tree->root = getGrammar();
 
     if (tree->root == NULL)
     {

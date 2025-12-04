@@ -1,5 +1,5 @@
-#include "dump.h"
-#include "diff.h"
+#include "../INCLUDES/dump.h"
+#include "../INCLUDES/diff.h"
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -174,7 +174,8 @@ void appendTreeHTMReport(const tree_t* tree, const char* title, int dumpCounter,
     fprintf(htm, "<h2>%s</h2>\n", title);
     fprintf(htm, "<p><b>Dump #:</b> %d</p>\n", dumpCounter);
 
-    if (tree) {
+    if (tree)
+    {
         fprintf(htm, "<p><b>Tree size:</b> %zu</p>\n", tree->size);
         fprintf(htm, "<p><b>Root address:</b> %p</p>\n", (void*)tree->root);
     }
@@ -182,7 +183,8 @@ void appendTreeHTMReport(const tree_t* tree, const char* title, int dumpCounter,
     fprintf(htm, "<img class='tree-img' src='IMAGES/%s.png' alt='Tree visualization' width='600'>\n", filename);
 
     fprintf(htm, "<pre>\n");
-    if (tree && tree->root) {
+    if (tree && tree->root)
+    {
         fprintf(htm, "Tree structure loaded successfully\n");
     } else {
         fprintf(htm, "Empty tree or loading failed\n");

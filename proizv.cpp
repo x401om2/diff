@@ -1,17 +1,20 @@
 #include <stdio.h>
-#include "diff.h"
-#include "dump.h"
-#include "proizv.h"
+#include "../INCLUDES/diff.h"
+#include "../INCLUDES/dump.h"
+#include "../INCLUDES/proizv.h"
+#include "../INCLUDES/DSL.h"
 
 
-tree_t* diffTree(const tree_t* tree, VariableTable* table, const char* var)
+
+tree_t* diffTree(const tree_t* tree, VariableTable* table, const char* var)     // var - по какой переменной дифференцируем
 {
-    tree_t* afterDiffTree = treeCtor();
+    tree_t* afterDiffTree = treeCtor();                                         // созд дерево в которое запишем дифф оригинальное дерево
 
     afterDiffTree->root = diffNode(tree->root, var, table);
 
     return afterDiffTree;
 }
+
 
 node_t* diffNode(node_t* node, const char* var, VariableTable* table)
 {
@@ -19,14 +22,14 @@ node_t* diffNode(node_t* node, const char* var, VariableTable* table)
 
     switch (node->type) {
         case NUM:
-            return createNumNode(0);
+            return NUM_(0);
 
         case VAR:
             if (strcmp(node->object.var, var) == 0)
             {
-                return createNumNode(1);
+                return NUM_(1);
             } else {
-                return createNumNode(0);
+                return NUM_(0);
             }
 
         case OP:
@@ -36,142 +39,91 @@ node_t* diffNode(node_t* node, const char* var, VariableTable* table)
 }
 
 
-
 node_t* differenciateOperation(node_t* node, VariableTable* table, const char* var)
 {
-    // проверки
     switch (node->object.operation) {
         case ADD:
             {
-                node_t* newNode = createTypedNode(OP, "+", diffNode(node->left, var, table), diffNode(node->right, var, table));
-                return newNode;
+                return ADD_(DL(node, var, table), DR(node, var, table));
             }
         case SUB:
             {
-                node_t* newNode = createTypedNode(OP, "-", diffNode(node->left, var, table), diffNode(node->right, var, table));
-                return newNode;
+                return SUB_(DL(node, var, table), DR(node, var, table));
             }
         case MUL:
             {
-                node_t* leftMul = createTypedNode(OP, "*", diffNode(node->left, var, table), copyNode(node->right));
-                node_t* rightMul = createTypedNode(OP, "*", copyNode(node->left), diffNode(node->right, var, table));
-                node_t* addNode = createTypedNode(OP, "+", leftMul, rightMul);
-                return addNode;
+                return ADD_(MUL_(DL(node, var, table), CR(node)), MUL_(CL(node), DR(node, var, table)));
             }
         case DIV:
             {
                 // (u/v)' = (u'v - uv') / v²
-                node_t* u = node->left;
-                node_t* v = node->right;
-                node_t* u_prime = diffNode(u, var, table);
-                node_t* v_prime = diffNode(v, var, table);
-
-                node_t* numerator_left = createTypedNode(OP, "*", u_prime, copyNode(v));
-                node_t* numerator_right = createTypedNode(OP, "*", copyNode(u), v_prime);
-                node_t* numerator = createTypedNode(OP, "-", numerator_left, numerator_right);
-
-                node_t* denominator = createTypedNode(OP, "^", copyNode(v), createNumNode(2));
-
-                node_t* result = createTypedNode(OP, "/", numerator, denominator);
-                return result;
+                return DIV_(
+                    SUB_(
+                        MUL_(DL(node, var, table), CR(node)),  // u'v
+                        MUL_(CL(node), DR(node, var, table))   // uv'
+                    ),
+                    POW_(CR(node), NUM_(2))                     // v²
+                );
             }
         case SIN:
             {
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* cosNode = createTypedNode(OP, "cos", copyNode(arg), NULL);
-                node_t* result = createTypedNode(OP, "*", cosNode, diff_arg);
-                return result;
+                // sin(u)' = cos(u) * u'
+                return MUL_(COS_(CL(node)), DL(node, var, table));
             }
         case COS:
             {
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* minus_one = createNumNode(-1);
-                node_t* sinNode = createTypedNode(OP, "sin", copyNode(arg), NULL);
-                node_t* minus_sin = createTypedNode(OP, "*", minus_one, sinNode);
-                node_t* result = createTypedNode(OP, "*", minus_sin, diff_arg);
-                return result;
+                // cos(u)' = -sin(u) * u'
+                return MUL_(MUL_(NUM_(-1), SIN_(CL(node))), DL(node, var, table));
             }
         case TG:
             {
                 // tg(u)' = u' / cos²(u)
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* cosNode = createTypedNode(OP, "cos", copyNode(arg), NULL);
-                node_t* cosSquared = createTypedNode(OP, "^", cosNode, createNumNode(2));
-                node_t* result = createTypedNode(OP, "/", diff_arg, cosSquared);
-                return result;
+                return DIV_(DL(node, var, table), POW_(COS_(CL(node)), NUM_(2)));
             }
         case CTG:
             {
                 // ctg(u)' = -u' / sin²(u)
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* minus_one = createNumNode(-1);
-                node_t* sinNode = createTypedNode(OP, "sin", copyNode(arg), NULL);
-                node_t* sinSquared = createTypedNode(OP, "^", sinNode, createNumNode(2));
-                node_t* numerator = createTypedNode(OP, "*", minus_one, diff_arg);
-                node_t* result = createTypedNode(OP, "/", numerator, sinSquared);
-                return result;
+                return DIV_(
+                    MUL_(NUM_(-1), DL(node, var, table)),
+                    POW_(SIN_(CL(node)), NUM_(2))
+                );
             }
         case ARCSIN:
             {
                 // arcsin(u)' = u' / sqrt(1 - u²)
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* one = createNumNode(1);
-                node_t* uSquared = createTypedNode(OP, "^", copyNode(arg), createNumNode(2));
-                node_t* one_minus_u2 = createTypedNode(OP, "-", one, uSquared);
-                node_t* sqrtNode = createTypedNode(OP, "sqrt", one_minus_u2, NULL);
-                node_t* result = createTypedNode(OP, "/", diff_arg, sqrtNode);
-                return result;
+                return DIV_(
+                    DL(node, var, table),
+                    SQRT_(SUB_(NUM_(1), POW_(CL(node), NUM_(2))))
+                );
             }
         case ARCCOS:
             {
                 // arccos(u)' = -u' / sqrt(1 - u²)
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* minus_one = createNumNode(-1);
-                node_t* one = createNumNode(1);
-                node_t* uSquared = createTypedNode(OP, "^", copyNode(arg), createNumNode(2));
-                node_t* one_minus_u2 = createTypedNode(OP, "-", one, uSquared);
-                node_t* sqrtNode = createTypedNode(OP, "sqrt", one_minus_u2, NULL);
-                node_t* numerator = createTypedNode(OP, "*", minus_one, diff_arg);
-                node_t* result = createTypedNode(OP, "/", numerator, sqrtNode);
-                return result;
+                return DIV_(
+                    MUL_(NUM_(-1), DL(node, var, table)),
+                    SQRT_(SUB_(NUM_(1), POW_(CL(node), NUM_(2))))
+                );
             }
         case ARCTG:
             {
                 // arctg(u)' = u' / (1 + u²)
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* one = createNumNode(1);
-                node_t* uSquared = createTypedNode(OP, "^", copyNode(arg), createNumNode(2));
-                node_t* denominator = createTypedNode(OP, "+", one, uSquared);
-                node_t* result = createTypedNode(OP, "/", diff_arg, denominator);
-                return result;
+                return DIV_(
+                    DL(node, var, table),
+                    ADD_(NUM_(1), POW_(CL(node), NUM_(2)))
+                );
             }
         case ARCCTG:
             {
                 // arcctg(u)' = -u' / (1 + u²)
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* minus_one = createNumNode(-1);
-                node_t* one = createNumNode(1);
-                node_t* uSquared = createTypedNode(OP, "^", copyNode(arg), createNumNode(2));
-                node_t* denominator = createTypedNode(OP, "+", one, uSquared);
-                node_t* numerator = createTypedNode(OP, "*", minus_one, diff_arg);
-                node_t* result = createTypedNode(OP, "/", numerator, denominator);
-                return result;
+                return DIV_(
+                    MUL_(NUM_(-1), DL(node, var, table)),
+                    ADD_(NUM_(1), POW_(CL(node), NUM_(2)))
+                );
             }
         case LN:
             {
                 // ln(u)' = u' / u
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* result = createTypedNode(OP, "/", diff_arg, copyNode(arg));
-                return result;
+                return DIV_(DL(node, var, table), CL(node));
             }
         case RAIZE:
             {
@@ -180,97 +132,71 @@ node_t* differenciateOperation(node_t* node, VariableTable* table, const char* v
 
                 if (varInLeft && !varInRight)
                 {
-                    // случай когда x в основании u^a
-                    node_t* a_node = copyNode(node->right);
-                    node_t* u_node = copyNode(node->left);
-                    node_t* aMinusOne = createTypedNode(OP, "-", copyNode(node->right), createNumNode(1));
-                    node_t* U_pow_AminusOne = createTypedNode(OP, "^", u_node, aMinusOne);
-                    node_t* diffU = diffNode(u_node, var, table);
-                    node_t* firstMul = createTypedNode(OP, "*", a_node, U_pow_AminusOne);
-                    node_t* result = createTypedNode(OP, "*", firstMul, diffU);
-                    return result;
+                    // u^a' = a * u^(a-1) * u'
+                    return MUL_(
+                        MUL_(
+                            CR(node),                         // a
+                            POW_(CL(node), SUB_(CR(node), NUM_(1)))  // u^(a-1)
+                        ),
+                        DL(node, var, table)                  // u'
+                    );
 
-                } else if (!varInLeft && varInRight) {
-                    // случай когда х в степени a^u
-                    node_t* a_node = copyNode(node->left);
-                    node_t* u_node = copyNode(node->right);
-                    node_t* ln_a = createTypedNode(OP, "ln", a_node, NULL);
-                    node_t* pow_u = diffNode(u_node, var, table);
-                    node_t* firstMul = createTypedNode(OP, "*", copyNode(node), ln_a);
-                    node_t* result = createTypedNode(OP, "*", firstMul, pow_u);
-                    return result;
-
-                } else if (varInLeft && varInRight) {
-                    // случай когда х и в степени и в основании osn^step
-                    node_t* osn_node = copyNode(node->left);
-                    node_t* step_node = copyNode(node->right);
-                    node_t* pow = createTypedNode(OP, "^", osn_node, step_node);
-                    node_t* diff_step = diffNode(step_node, var, table);
-                    node_t* ln_osn = createTypedNode(OP, "ln", osn_node, NULL);
-                    node_t* firstMul = createTypedNode(OP, "*", diff_step, ln_osn);
-                    node_t* diff_osn = diffNode(osn_node, var, table);
-                    node_t* secondMul = createTypedNode(OP, "*", step_node, diff_osn);
-                    node_t* firstDiv = createTypedNode(OP, "/", secondMul, osn_node);
-                    node_t* firstAdd = createTypedNode(OP, "+", firstMul, firstDiv);
-                    node_t* result = createTypedNode(OP, "*", pow, firstAdd);
-                    return result;
                 }
+                else if (!varInLeft && varInRight)
+                {
+                    // a^u' = a^u * ln(a) * u'
+                    return MUL_(
+                        MUL_(
+                            POW_(CL(node), CR(node)),          // a^u
+                            LN_(CL(node))                      // ln(a)
+                        ),
+                        DR(node, var, table)                  // u'
+                    );
+
+                }
+                else if (varInLeft && varInRight)
+                {
+                    // u^v' = u^v * (v'*ln(u) + v*u'/u)
+                    return MUL_(
+                        POW_(CL(node), CR(node)),               // u^v
+                        ADD_(
+                            MUL_(DR(node, var, table), LN_(CL(node))),   // v'*ln(u)
+                            DIV_(MUL_(CR(node), DL(node, var, table)), CL(node))  // v*u'/u
+                        )
+                    );
+                }
+
+                return NUM_(0);
             }
         case SQRT:
             {
-                // sqrt(u)' = u' / (2 * sqrt(u))
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* two = createNumNode(2);
-                node_t* sqrt_u = createTypedNode(OP, "sqrt", copyNode(arg), NULL);
-                node_t* denominator = createTypedNode(OP, "*", two, sqrt_u);
-                node_t* result = createTypedNode(OP, "/", diff_arg, denominator);
-                return result;
+                // sqrt(u)' = u' / (2*sqrt(u))
+                return DIV_(DL(node, var, table), MUL_(NUM_(2), SQRT_(CL(node))));
             }
 
         case SH:
             {
                 // sh(u)' = ch(u) * u'
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* chNode = createTypedNode(OP, "ch", copyNode(arg), NULL);
-                node_t* result = createTypedNode(OP, "*", chNode, diff_arg);
-                return result;
+                return MUL_(CH_(CL(node)), DL(node, var, table));
             }
         case CH:
             {
                 // ch(u)' = sh(u) * u'
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* shNode = createTypedNode(OP, "sh", copyNode(arg), NULL);
-                node_t* result = createTypedNode(OP, "*", shNode, diff_arg);
-                return result;
+                return MUL_(SH_(CL(node)), DL(node, var, table));
             }
         case TH:
             {
                 // th(u)' = u' / ch²(u)
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* chNode = createTypedNode(OP, "ch", copyNode(arg), NULL);
-                node_t* chSquared = createTypedNode(OP, "^", chNode, createNumNode(2));
-                node_t* result = createTypedNode(OP, "/", diff_arg, chSquared);
-                return result;
+                return DIV_(DL(node, var, table), POW_(CH_(CL(node)), NUM_(2)));
             }
         case CTH:
             {
                 // cth(u)' = -u' / sh²(u)
-                node_t* arg = node->left;
-                node_t* diff_arg = diffNode(arg, var, table);
-                node_t* minus_one = createNumNode(-1);
-                node_t* shNode = createTypedNode(OP, "sh", copyNode(arg), NULL);
-                node_t* shSquared = createTypedNode(OP, "^", shNode, createNumNode(2));
-                node_t* numerator = createTypedNode(OP, "*", minus_one, diff_arg);
-                node_t* result = createTypedNode(OP, "/", numerator, shSquared);
-                return result;
+                return DIV_(MUL_(NUM_(-1), DL(node, var, table)), POW_(SH_(CL(node)), NUM_(2)));
             }
         default:
             {
-                return createNumNode(0);
+                return NUM_(0);
             }
     }
 }
@@ -281,19 +207,19 @@ node_t* copyNode(node_t* originalNode)
 {
     if (originalNode == NULL) return NULL;
 
-    node_t* newNode = NULL;
+    node_t* newNode = NULL;                                                     // указ на новый узел пока NULL
 
-    const char* nodeValue = getNodeValueString(originalNode);
+    const char* nodeValue = getNodeValueString(originalNode);                   // получ значение ориг узла
 
-    switch (originalNode->type) {
+    switch (originalNode->type) {                                               // в зависимости от типа знач создаем новый узел
         case OP:
             newNode = createTypedNode(OP, nodeValue, copyNode(originalNode->left), copyNode(originalNode->right));
             break;
         case NUM:
-            newNode = createNumNode(originalNode->object.constant);
+            newNode = NUM_(originalNode->object.constant);
             break;
         case VAR:
-            newNode = createTypedNode(VAR, nodeValue, NULL, NULL);
+            newNode = VAR_(nodeValue);
             break;
     }
     return newNode;
@@ -304,7 +230,7 @@ bool containVariable(node_t* node, const char* var)
 {
     if (node == NULL) return false;
 
-    if (node->type == VAR && strcmp(node->object.var, var) == 0)
+    if (node->type == VAR && strcmp(node->object.var, var) == 0)                // рекурсивно обходим ноды чтобы понять содержится ли переменная или нет
     {
         return true;
     }

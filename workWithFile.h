@@ -4,15 +4,16 @@
 #include <stdio.h>
 #include "diff.h"
 
-// node_t* loadNodeMathExpressionFromBuffer(const char* buffer, int* pos, tree_t* tree, VariableTable* table);
 tree_t* loadMathTree(const char* filename, VariableTable* table);
 
-node_t* getN();
-node_t* getE();
-node_t* getT();
-node_t* getP();
-node_t* getF();
-node_t* getG();
+node_t* getNumber();
+node_t* getExpression();
+node_t* getTerm();
+node_t* getPrimary();
+node_t* getFunction();
+node_t* getGrammar();
+
+node_t* getPower();
 
 
 #endif

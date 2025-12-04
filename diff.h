@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdio.h>
+
 const int COUNT_OF_VARIABLES = 3;
-const int POISON_VALUE = -99;
-const int MAX_NAME_LEN = 40;
+const int MAX_NAME_LEN = 200;
 const int DATA_CAPACITY = 100;
 const int MAX_INPUT_LEN = 50;
-const int CMD_COMMAND_LEN = 50;
 
 const double PI_2 = 1.570796;
 
@@ -24,6 +24,7 @@ typedef enum
     BAD_OPERATION_TYPE = 7
 
 } errors_t;
+
 
 typedef enum {
     TREE_SUCCESS = 0,
@@ -81,14 +82,10 @@ struct node_t {
 };
 
 
-typedef struct tree_t tree_t;
-
-struct tree_t {
-    node_t* array_data;
+typedef struct {
     node_t* root;
-    char* arrayOfVars;
     size_t size;
-};
+} tree_t;
 
 
 typedef struct {
@@ -113,15 +110,13 @@ void setParentLinks(node_t* node, node_t* parent);
 void skipWhitespaces(const char* buffer, int* pos);
 int countTreeSize(node_t* node);
 
-tree_t* initializeTree(VariableTable* table);
-
 void printAkinatorTree(const node_t* node);
 
 void deleteTable(VariableTable* table);
 
 node_t* createTypedNode(type_t type, const char* data, node_t* leftNode, node_t* rightNode);
-node_t* createNumNode(double value);
 
+node_t* createNumNode(double value);
 
 double countingTree(node_t* node, VariableTable* table);
 
