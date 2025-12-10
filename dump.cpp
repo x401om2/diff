@@ -1,5 +1,5 @@
-#include "../INCLUDES/dump.h"
-#include "../INCLUDES/diff.h"
+#include "dump.h"
+#include "diff.h"
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -50,7 +50,10 @@ const char* getNodeValueString(const node_t* node)
 
 void generateDotNodes(FILE* dotFile, const node_t* node, int* nodeCounter)
 {
-    if (node == NULL) return;
+    if (node == NULL)
+    {
+        return;
+    }
 
     int currentId = *nodeCounter;
 
@@ -95,23 +98,33 @@ void generateDotNodes(FILE* dotFile, const node_t* node, int* nodeCounter)
 
 void treeGraphDump(const tree_t* tree, const char* filename)
 {
-    if (tree == NULL) return;
+    if (tree == NULL)
+    {
+        return;
+    }
 
-    char dotFilename[256] = {0};
+    char dotFilename[MAX_NAME_LEN] = {0};
     snprintf(dotFilename, sizeof(dotFilename), "IMAGES/%s.dot", filename);
 
     FILE* dotFile = fopen(dotFilename, "w");
-    if (!dotFile) return;
 
-    fprintf(dotFile, "digraph ExpressionTree {\n");
-    fprintf(dotFile, "    rankdir=TB;\n");
-    fprintf(dotFile, "    node [shape=record, fontname=\"Arial\"];\n");
-    fprintf(dotFile, "    edge [fontsize=10];\n\n");
+    if (!dotFile)
+    {
+        return;
+    }
+
+    fprintf(dotFile,
+        "digraph ExpressionTree {\n"
+        "    rankdir=TB;\n"
+        "    node [shape=record, fontname=\"Arial\"];\n"
+        "    edge [fontsize=10];\n\n");
 
     if (tree->root == NULL)
     {
         fprintf(dotFile, "    empty [label=\"EMPTY\\nTREE\"];\n");
-    } else {
+    }
+    else
+    {
         int nodeCounter = 0;
         generateDotNodes(dotFile, tree->root, &nodeCounter);
     }
@@ -119,10 +132,10 @@ void treeGraphDump(const tree_t* tree, const char* filename)
     fprintf(dotFile, "}\n");
     fclose(dotFile);
 
-    char pngFilename[256] = {0};
+    char pngFilename[MAX_NAME_LEN] = {0};
     snprintf(pngFilename, sizeof(pngFilename), "IMAGES/%s.png", filename);
 
-    char command[512] = {0};
+    char command[MAXIMUS_LEN] = {0};
     snprintf(command, sizeof(command), "dot -Tpng \"IMAGES/%s.dot\" -o \"IMAGES/%s.png\"", filename, filename);
     system(command);
 
@@ -134,12 +147,15 @@ void treeGraphDump(const tree_t* tree, const char* filename)
 
 void fullTreeDump(const tree_t* tree, const char* title)
 {
-    if (tree == NULL) return;
+    if (tree == NULL)
+    {
+        return;
+    }
 
     static int dumpCounter = 0;
     dumpCounter++;
 
-    char filename[256] = {0};
+    char filename[MAXIMUS_LEN] = {0};
     snprintf(filename, sizeof(filename), "expr_dump_%d", dumpCounter);
 
     printf("=== %s (Dump #%d) ===\n", title, dumpCounter);
@@ -154,12 +170,14 @@ void fullTreeDump(const tree_t* tree, const char* title)
 void initMathDebugHTM()
 {
     FILE* htm = fopen("math_debug.html", "w");
-    if (htm) {
-        fprintf(htm, "<!DOCTYPE html>\n");
-        fprintf(htm, "<html>\n");
-        fprintf(htm, "<head><title>Math Tree Dumps</title></head>\n");
-        fprintf(htm, "<body>\n");
-        fprintf(htm, "<h1>Math Tree Dumps</h1>\n");
+    if (htm)
+    {
+        fprintf(htm,
+            "<!DOCTYPE html>\n"
+            "<html>\n"
+            "<head><title>Math Tree Dumps</title></head>\n"
+            "<body>\n"
+            "<h1>Math Tree Dumps</h1>\n");
         fclose(htm);
     }
 }
@@ -168,11 +186,16 @@ void initMathDebugHTM()
 void appendTreeHTMReport(const tree_t* tree, const char* title, int dumpCounter, const char* filename)
 {
     FILE* htm = fopen("math_debug.html", "a");
-    if (!htm) return;
+    if (!htm)
+    {
+        return;
+    }
 
-    fprintf(htm, "<div class='dump'>\n");
-    fprintf(htm, "<h2>%s</h2>\n", title);
-    fprintf(htm, "<p><b>Dump #:</b> %d</p>\n", dumpCounter);
+    fprintf(htm,
+        "<div class='dump'>\n"
+        "<h2>%s</h2>\n"
+        "<p><b>Dump #:</b> %d</p>\n",
+        title, dumpCounter);
 
     if (tree)
     {
@@ -186,7 +209,9 @@ void appendTreeHTMReport(const tree_t* tree, const char* title, int dumpCounter,
     if (tree && tree->root)
     {
         fprintf(htm, "Tree structure loaded successfully\n");
-    } else {
+    }
+    else
+    {
         fprintf(htm, "Empty tree or loading failed\n");
     }
     fprintf(htm, "</pre>\n");

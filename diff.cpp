@@ -1,10 +1,11 @@
-#include "../INCLUDES/diff.h"
-#include "../INCLUDES/workWithFile.h"
+#include "diff.h"
+#include "workWithFile.h"
 #include <stdlib.h>  // calloc, free
 #include <string.h>  // strcmp
 #include <stdio.h>
 #include <ctype.h>   // atof
 #include <math.h>
+#include "DSL.h"
 
 
 tree_t* treeCtor(void)
@@ -39,7 +40,10 @@ errors_t treeRecursiveDelete(node_t* node)
 
 void setParentLinks(node_t* node, node_t* parent)
 {
-    if (node == NULL) return;
+    if (node == NULL)
+    {
+        return;
+    }
 
     node->parent = parent;
     setParentLinks(node->left, node);
@@ -49,7 +53,11 @@ void setParentLinks(node_t* node, node_t* parent)
 
 void skipWhitespaces(const char* buffer, int* pos)
 {
-    if (buffer == NULL || pos == NULL) return;
+    if (buffer == NULL || pos == NULL)
+    {
+        printf("ошибка нулевой указатель передан в функции пропуска пробелов\n");
+        return;
+    }
 
     while (buffer[*pos] == ' ' || buffer[*pos] == '\n' || buffer[*pos] == '\t' || buffer[*pos] == '\r')
     {
@@ -60,7 +68,10 @@ void skipWhitespaces(const char* buffer, int* pos)
 
 int countTreeSize(node_t* node)
 {
-    if (node == NULL) return 0;
+    if (node == NULL)
+    {
+        return 0;
+    }
     return 1 + countTreeSize(node->left) + countTreeSize(node->right);
 }
 
@@ -131,7 +142,10 @@ node_t* createTypedNode(type_t type, const char* data, node_t* leftNode, node_t*
 {
     node_t* newNode = (node_t*)calloc(1, sizeof(node_t));
 
-    if (newNode == NULL) return NULL;
+    if (newNode == NULL)
+    {
+        return NULL;
+    }
 
     newNode->type = type;
 
@@ -173,13 +187,17 @@ node_t* createTypedNode(type_t type, const char* data, node_t* leftNode, node_t*
 
 double countingTree(node_t* node, VariableTable* table)
 {
-    if (node == NULL) return 777;
+    if (node == NULL)
+    {
+        printf("ошибка - указатель на node - NULL - функция countingTree\n");
+    }
 
     if (node->type == NUM)
     {
         return node->object.constant;
     }
-    else if (node->type == VAR) {
+    else if (node->type == VAR)
+    {
         for (int i = 0; i < table->count; i++)
         {
             if (table->variables[i].isDefined && strcmp(table->variables[i].name, node->object.var) == 0)
@@ -187,10 +205,11 @@ double countingTree(node_t* node, VariableTable* table)
                 return table->variables[i].value;
             }
         }
-        printf("Ошибка: переменная %s не определена\n", node->object.var);
+        printf("ahtuing: переменная %s не определена\n", node->object.var);
         return 777;
     }
-    else if (node->type == OP) {
+    else if (node->type == OP)
+    {
         double first = countingTree(node->left, table);
         double second = 0;
 
@@ -204,7 +223,8 @@ double countingTree(node_t* node, VariableTable* table)
             case SUB: return first - second;
             case MUL: return first * second;
             case DIV:
-                if (second == 0) {
+                if (second == 0)
+                {
                     printf("Ошибка: деление на ноль\n");
                     return 777;
                 }
@@ -322,3 +342,4 @@ void deleteTable(VariableTable* table)
     table->capacity = 0;
 }
 
+#include "DSL_undef.h"

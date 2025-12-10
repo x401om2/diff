@@ -1,9 +1,9 @@
-#include "../INCLUDES/diff.h"
-#include "../INCLUDES/proizv.h"
-#include "../INCLUDES/toLatex.h"
-#include "../INCLUDES/workWithFile.h"
-#include "../INCLUDES/dump.h"
-#include "../INCLUDES/simply.h"
+#include "diff.h"
+#include "proizv.h"
+#include "toLatex.h"
+#include "workWithFile.h"
+#include "dump.h"
+#include "simply.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -38,7 +38,32 @@ int main(int argc, char* argv[])
         table.variables[i].isDefined = true;
     }
 
-    createComprehensiveReport(tree, &table, "comprehensive_report.tex");        // comprehensive - всесторонний report
+    float plotMinX = -5.0;
+    float plotMaxX = 5.0;
+
+    printf("Введите минимальный x (по умолчанию %.2f): ", plotMinX);
+
+    if (scanf("%f", &plotMinX) != 1)
+    {
+        plotMinX = -5.0;
+    }
+
+    printf("Введите максимальный x (по умолчанию %.2f): ", plotMaxX);
+
+    if (scanf("%f", &plotMaxX) != 1)
+    {
+        plotMaxX = 5.0;
+    }
+
+    if (plotMinX >= plotMaxX)
+    {
+        printf("пиздец. минимальное значение должно быть меньше максимального.\n");
+        printf("Используются значения по умолчанию (-5, 5).\n");
+        plotMinX = -5.0;
+        plotMaxX = 5.0;
+    }
+
+    createComprehensiveReport(tree, &table, "comprehensive_report.tex", plotMinX, plotMaxX);        // comprehensive - всесторонний report
 
     system("pdflatex -interaction=nonstopmode comprehensive_report.tex");       // вызывает комп латех для генерации файла
 

@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include "../INCLUDES/diff.h"
-#include "../INCLUDES/dump.h"
-#include "../INCLUDES/proizv.h"
-#include "../INCLUDES/DSL.h"
+#include "diff.h"
+#include "dump.h"
+#include "proizv.h"
+#include "DSL.h"
 
 
 
@@ -18,7 +18,10 @@ tree_t* diffTree(const tree_t* tree, VariableTable* table, const char* var)     
 
 node_t* diffNode(node_t* node, const char* var, VariableTable* table)
 {
-    if (node == NULL) return NULL;
+    if (node == NULL)
+    {
+        return NULL;
+    }
 
     switch (node->type) {
         case NUM:
@@ -28,7 +31,9 @@ node_t* diffNode(node_t* node, const char* var, VariableTable* table)
             if (strcmp(node->object.var, var) == 0)
             {
                 return NUM_(1);
-            } else {
+            }
+            else
+            {
                 return NUM_(0);
             }
 
@@ -205,7 +210,10 @@ node_t* differenciateOperation(node_t* node, VariableTable* table, const char* v
 
 node_t* copyNode(node_t* originalNode)
 {
-    if (originalNode == NULL) return NULL;
+    if (originalNode == NULL)
+    {
+        return NULL;
+    }
 
     node_t* newNode = NULL;                                                     // указ на новый узел пока NULL
 
@@ -228,7 +236,10 @@ node_t* copyNode(node_t* originalNode)
 
 bool containVariable(node_t* node, const char* var)
 {
-    if (node == NULL) return false;
+    if (node == NULL)
+    {
+        return false;
+    }
 
     if (node->type == VAR && strcmp(node->object.var, var) == 0)                // рекурсивно обходим ноды чтобы понять содержится ли переменная или нет
     {
@@ -236,3 +247,6 @@ bool containVariable(node_t* node, const char* var)
     }
     return containVariable(node->left, var) || containVariable(node->right, var);
 }
+
+
+#include "DSL_undef.h"

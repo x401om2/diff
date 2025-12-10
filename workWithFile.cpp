@@ -1,16 +1,16 @@
-#include "../INCLUDES/workWithFile.h"
-#include "../INCLUDES/diff.h"
+#include "workWithFile.h"
+#include "diff.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../INCLUDES/DSL.h"
+#include "DSL.h"
+
 
 static const char* s = NULL;
 static VariableTable* current_table = NULL;
 
-// N - number ; E - expression ; T - term symbol ; P - выражение со скобками снаружи; F - function
-
+// N - number ; E - expression ; T - term symbol ; Primary - выражение со скобками снаружи; F - function; Power - степень
 
 static void skipSpacesParser()
 {
@@ -39,6 +39,7 @@ node_t* getNumber()
     return NUM_(val);
 }
 
+
 node_t* getExpression()                                             // отвечает за сложение и вычитание
 {
     skipSpacesParser();
@@ -56,7 +57,8 @@ node_t* getExpression()                                             // отве�
         {
             val = ADD_(val, val2);
         }
-        else {
+        else
+        {
             val = SUB_(val, val2);
         }
     }
@@ -65,7 +67,8 @@ node_t* getExpression()                                             // отве�
     return val;
 }
 
-node_t* getTerm()                              // отвечает за умножение и деление
+
+node_t* getTerm()                                                   // отвечает за умножение и деление
 {
     skipSpacesParser();
     node_t* val = getPower();
@@ -82,7 +85,8 @@ node_t* getTerm()                              // отвечает за умно
         {
             val = MUL_(val, val2);
         }
-        else {
+        else
+        {
             val = DIV_(val, val2);
         }
         skipSpacesParser();
@@ -149,7 +153,9 @@ node_t* getFunction()                                  // отвечает за 
             if (*s == ')')
             {
                 s++;
-            } else {
+            }
+            else
+            {
                 printf("ожидалась ')' после %s\n", funcName);
             }
             return createTypedNode(OP, funcName, arg, NULL);
@@ -160,6 +166,7 @@ node_t* getFunction()                                  // отвечает за 
 
     return VAR_(funcName);
 }
+
 
 node_t* getPrimary()                                      // отвечает за первичные выражения
 {
@@ -192,8 +199,10 @@ node_t* getPrimary()                                      // отвечает з
         if (*s == ')')
         {
             s++;
-        } else {
-            printf("Ошибка: ожидалась ')'\n");
+        }
+        else
+        {
+            printf("аhtung: ожидалась ')'\n");
         }
         return val;
     }
@@ -207,7 +216,8 @@ node_t* getPrimary()                                      // отвечает з
     }
 }
 
-node_t* getGrammar()                                                        // главная функция вызывающая
+
+node_t* getGrammar()                                                        // главная функция вызывающая - general
 {
     skipSpacesParser();
     node_t* val = getExpression();
@@ -221,6 +231,7 @@ node_t* getGrammar()                                                        // �
 
     return val;
 }
+
 
 tree_t* loadMathTree(const char* filename, VariableTable* table)
 {
@@ -249,10 +260,11 @@ tree_t* loadMathTree(const char* filename, VariableTable* table)
 
     buffer[file_size] = '\0';
 
-    s = buffer;                             // как раз то что сверху задали изменяем
+    s = buffer;                             // как раз то что сверху задали static const - изменяем здесь
     current_table = table;
 
     tree_t* tree = treeCtor();
+
     if (tree == NULL)
     {
         printf("Ошибка: не удалось создать дерево\n");
@@ -278,3 +290,4 @@ tree_t* loadMathTree(const char* filename, VariableTable* table)
     return tree;
 }
 
+#include "DSL_undef.h"
