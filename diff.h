@@ -10,6 +10,7 @@ const int COUNT_OF_VARIABLES = 3;
 const int MAX_NAME_LEN = 200;
 const int DATA_CAPACITY = 100;
 const int MAX_INPUT_LEN = 50;
+const int MAXIMUS_LEN = 300;
 
 const double PI_2 = 1.570796;
 

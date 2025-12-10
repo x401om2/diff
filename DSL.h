@@ -38,11 +38,5 @@
 #define ARCTG_(arg) createTypedNode(OP, "arctg", (arg), NULL)
 #define ARCCTG_(arg) createTypedNode(OP, "arcctg", (arg), NULL)
 
-// // проверяем типы узлов
-// #define IS_NUM(node) ((node) && (node)->type == NUM)
-// #define IS_VAR(node) ((node) && (node)->type == VAR)
-// #define IS_OP(node) ((node) && (node)->type == OP)
-
-
 
 #endif
