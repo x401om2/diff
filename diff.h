@@ -95,14 +95,6 @@ typedef struct {
     bool isDefined;
 } variable_t;
 
-
-typedef struct {
-    variable_t* variables;
-    int count;
-    int capacity;
-} VariableTable;
-
-
 tree_t* treeCtor(void);
 errors_t treeRecursiveDelete(node_t* node);
 
@@ -111,18 +103,12 @@ void setParentLinks(node_t* node, node_t* parent);
 void skipWhitespaces(const char* buffer, int* pos);
 int countTreeSize(node_t* node);
 
-void printAkinatorTree(const node_t* node);
-
-void deleteTable(VariableTable* table);
 
 node_t* createTypedNode(type_t type, const char* data, node_t* leftNode, node_t* rightNode);
-
 node_t* createNumNode(double value);
+double countingTree(node_t* node, double valueOfX);
 
-double countingTree(node_t* node, VariableTable* table);
-
-variable_t* findVarInTable(VariableTable* table, char* name);
-
-void initVariableTable(VariableTable* table, int initialCapacity);
+void getPlotRangeFromUser(float* minX, float* maxX);
+void getVariableValues(double* x);
 
 #endif

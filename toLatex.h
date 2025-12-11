@@ -5,22 +5,27 @@
 #include "diff.h"
 
 
-void nodeToLatex(node_t* node, FILE* tex_file);
-void formulaToLatex(tree_t* tree, FILE* tex_file, const char* title);
-void formulaWithComputationToLatex(tree_t* tree, VariableTable* table, FILE* tex_file, const char* title);
-void variablesTableToLatex(VariableTable* table, FILE* tex_file);
+void nodeToLatex(node_t* node, FILE* texFile);
+void formulaToLatex(tree_t* tree, FILE* texFile, const char* title);
 
-void createComprehensiveReport(tree_t* original, VariableTable* table, const char* filename,  float plotMinX, float plotMaxX);
+void formulaWithComputationToLatex(tree_t* tree, double valueOfX, FILE* texFile, const char* title);
 
-void writeLaTeXPreamble(FILE* tex_file);
-void writeTitleAndTOC(FILE* tex_file);
-double writeOriginalDataSection(tree_t* original, VariableTable* table, FILE* tex_file);
-tree_t* writeSimplificationSection(tree_t* original, VariableTable* table, FILE* tex_file, double* simplified_value, float plotMinX, float plotMaxX);
-tree_t* writeDerivativeSection(tree_t* simplified, VariableTable* table, FILE* tex_file, double* derivative_value, float plotMinX, float plotMaxX);
-void writeFinalResultsSection(tree_t* simplified, tree_t* derivative, VariableTable* table, FILE* tex_file, double simplified_value, double derivative_value);
-void writeSummaryTable(tree_t* original, tree_t* simplified, tree_t* derivative, VariableTable* table, FILE* tex_file, double original_value, double simplified_value, double derivative_value);
+void createComprehensiveReport(tree_t* original, const char* filename,  float plotMinX, float plotMaxX, double valueOfX);
+
+void writeLaTeXPreamble(FILE* texFile);
+void writeTitleAndTOC(FILE* texFile);
+
+
 void cleanupTrees(tree_t* simplified, tree_t* derivative);
-void writeLaTeXFooter(FILE* tex_file);
+void writeLaTeXFooter(FILE* texFile);
 
+
+void writeFinalResultsSection(tree_t* simplified, tree_t* derivative, FILE* texFile, double simplifiedValue, double derivativeValue, double valueOfX);
+
+
+double writeOriginalDataSection(tree_t* original, FILE* texFile, double valueOfX);
+tree_t* writeSimplificationSection(tree_t* original, FILE* texFile, double* simplifiedValue, float plotMinX, float plotMaxX, double valueOfX);
+
+tree_t* writeDerivativeSection(tree_t* simplified, FILE* texFile, double* derivativeValue, float plotMinX, float plotMaxX, double valueOfX);
 
 #endif

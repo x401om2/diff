@@ -4,16 +4,22 @@
 #include <stdio.h>
 #include "diff.h"
 
-tree_t* loadMathTree(const char* filename, VariableTable* table);
 
-node_t* getNumber();
-node_t* getExpression();
-node_t* getTerm();
-node_t* getPrimary();
-node_t* getFunction();
-node_t* getGrammar();
+typedef struct {
+    const char* s;                // указатель на текущую позицию в строке
+} parserState;
 
-node_t* getPower();
+
+tree_t* loadMathTree(const char* filename);
+
+
+node_t* getNumber(parserState* st);
+node_t* getExpression(parserState* st);
+node_t* getTerm(parserState* st);
+node_t* getPrimary(parserState* st);
+node_t* getFunction(parserState* st);
+node_t* getGrammar(parserState* st);
+node_t* getPower(parserState* st);
 
 
 #endif

@@ -6,8 +6,8 @@
 #define CL(node) copyNode((node)->left)
 #define CR(node) copyNode((node)->right)
 
-#define DL(node, var, table) diffNode(CL(node), (var), (table))
-#define DR(node, var, table) diffNode(CR(node), (var), (table))
+#define DL(node) diffNode(CL(node))
+#define DR(node) diffNode(CR(node))
 
 #define NUM_(val) createNumNode(val)
 #define VAR_(name) createTypedNode(VAR, (name), NULL, NULL)
