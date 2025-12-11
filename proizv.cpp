@@ -6,17 +6,17 @@
 
 
 
-tree_t* diffTree(const tree_t* tree, VariableTable* table, const char* var)     // var - по какой переменной дифференцируем
+tree_t* diffTree(const tree_t* tree)     // var - по какой переменной дифференцируем
 {
     tree_t* afterDiffTree = treeCtor();                                         // созд дерево в которое запишем дифф оригинальное дерево
 
-    afterDiffTree->root = diffNode(tree->root, var, table);
+    afterDiffTree->root = diffNode(tree->root);
 
     return afterDiffTree;
 }
 
 
-node_t* diffNode(node_t* node, const char* var, VariableTable* table)
+node_t* diffNode(node_t* node)
 {
     if (node == NULL)
     {
@@ -28,7 +28,7 @@ node_t* diffNode(node_t* node, const char* var, VariableTable* table)
             return NUM_(0);
 
         case VAR:
-            if (strcmp(node->object.var, var) == 0)
+            if (strcmp(node->object.var, "x") == 0)
             {
                 return NUM_(1);
             }
@@ -38,34 +38,34 @@ node_t* diffNode(node_t* node, const char* var, VariableTable* table)
             }
 
         case OP:
-            return differenciateOperation(node, table, var);
+            return differenciateOperation(node);
     }
 
 }
 
 
-node_t* differenciateOperation(node_t* node, VariableTable* table, const char* var)
+node_t* differenciateOperation(node_t* node)
 {
     switch (node->object.operation) {
         case ADD:
             {
-                return ADD_(DL(node, var, table), DR(node, var, table));
+                return ADD_(DL(node), DR(node));
             }
         case SUB:
             {
-                return SUB_(DL(node, var, table), DR(node, var, table));
+                return SUB_(DL(node), DR(node));
             }
         case MUL:
             {
-                return ADD_(MUL_(DL(node, var, table), CR(node)), MUL_(CL(node), DR(node, var, table)));
+                return ADD_(MUL_(DL(node), CR(node)), MUL_(CL(node), DR(node)));
             }
         case DIV:
             {
                 // (u/v)' = (u'v - uv') / v²
                 return DIV_(
                     SUB_(
-                        MUL_(DL(node, var, table), CR(node)),  // u'v
-                        MUL_(CL(node), DR(node, var, table))   // uv'
+                        MUL_(DL(node), CR(node)),  // u'v
+                        MUL_(CL(node), DR(node))   // uv'
                     ),
                     POW_(CR(node), NUM_(2))                     // v²
                 );
@@ -73,67 +73,22 @@ node_t* differenciateOperation(node_t* node, VariableTable* table, const char* v
         case SIN:
             {
                 // sin(u)' = cos(u) * u'
-                return MUL_(COS_(CL(node)), DL(node, var, table));
+                return MUL_(COS_(CL(node)), DL(node));
             }
         case COS:
             {
                 // cos(u)' = -sin(u) * u'
-                return MUL_(MUL_(NUM_(-1), SIN_(CL(node))), DL(node, var, table));
+                return MUL_(MUL_(NUM_(-1), SIN_(CL(node))), DL(node));
             }
         case TG:
             {
                 // tg(u)' = u' / cos²(u)
-                return DIV_(DL(node, var, table), POW_(COS_(CL(node)), NUM_(2)));
-            }
-        case CTG:
-            {
-                // ctg(u)' = -u' / sin²(u)
-                return DIV_(
-                    MUL_(NUM_(-1), DL(node, var, table)),
-                    POW_(SIN_(CL(node)), NUM_(2))
-                );
-            }
-        case ARCSIN:
-            {
-                // arcsin(u)' = u' / sqrt(1 - u²)
-                return DIV_(
-                    DL(node, var, table),
-                    SQRT_(SUB_(NUM_(1), POW_(CL(node), NUM_(2))))
-                );
-            }
-        case ARCCOS:
-            {
-                // arccos(u)' = -u' / sqrt(1 - u²)
-                return DIV_(
-                    MUL_(NUM_(-1), DL(node, var, table)),
-                    SQRT_(SUB_(NUM_(1), POW_(CL(node), NUM_(2))))
-                );
-            }
-        case ARCTG:
-            {
-                // arctg(u)' = u' / (1 + u²)
-                return DIV_(
-                    DL(node, var, table),
-                    ADD_(NUM_(1), POW_(CL(node), NUM_(2)))
-                );
-            }
-        case ARCCTG:
-            {
-                // arcctg(u)' = -u' / (1 + u²)
-                return DIV_(
-                    MUL_(NUM_(-1), DL(node, var, table)),
-                    ADD_(NUM_(1), POW_(CL(node), NUM_(2)))
-                );
-            }
-        case LN:
-            {
-                // ln(u)' = u' / u
-                return DIV_(DL(node, var, table), CL(node));
+                return DIV_(DL(node), POW_(COS_(CL(node)), NUM_(2)));
             }
         case RAIZE:
             {
-                bool varInLeft = containVariable(node->left, var);
-                bool varInRight = containVariable(node->right, var);
+                bool varInLeft = containVariable(node->left);
+                bool varInRight = containVariable(node->right);
 
                 if (varInLeft && !varInRight)
                 {
@@ -143,7 +98,7 @@ node_t* differenciateOperation(node_t* node, VariableTable* table, const char* v
                             CR(node),                         // a
                             POW_(CL(node), SUB_(CR(node), NUM_(1)))  // u^(a-1)
                         ),
-                        DL(node, var, table)                  // u'
+                        DL(node)                  // u'
                     );
 
                 }
@@ -155,7 +110,7 @@ node_t* differenciateOperation(node_t* node, VariableTable* table, const char* v
                             POW_(CL(node), CR(node)),          // a^u
                             LN_(CL(node))                      // ln(a)
                         ),
-                        DR(node, var, table)                  // u'
+                        DR(node)                  // u'
                     );
 
                 }
@@ -165,8 +120,8 @@ node_t* differenciateOperation(node_t* node, VariableTable* table, const char* v
                     return MUL_(
                         POW_(CL(node), CR(node)),               // u^v
                         ADD_(
-                            MUL_(DR(node, var, table), LN_(CL(node))),   // v'*ln(u)
-                            DIV_(MUL_(CR(node), DL(node, var, table)), CL(node))  // v*u'/u
+                            MUL_(DR(node), LN_(CL(node))),   // v'*ln(u)
+                            DIV_(MUL_(CR(node), DL(node)), CL(node))  // v*u'/u
                         )
                     );
                 }
@@ -176,28 +131,28 @@ node_t* differenciateOperation(node_t* node, VariableTable* table, const char* v
         case SQRT:
             {
                 // sqrt(u)' = u' / (2*sqrt(u))
-                return DIV_(DL(node, var, table), MUL_(NUM_(2), SQRT_(CL(node))));
+                return DIV_(DL(node), MUL_(NUM_(2), SQRT_(CL(node))));
             }
 
         case SH:
             {
                 // sh(u)' = ch(u) * u'
-                return MUL_(CH_(CL(node)), DL(node, var, table));
+                return MUL_(CH_(CL(node)), DL(node));
             }
         case CH:
             {
                 // ch(u)' = sh(u) * u'
-                return MUL_(SH_(CL(node)), DL(node, var, table));
+                return MUL_(SH_(CL(node)), DL(node));
             }
         case TH:
             {
                 // th(u)' = u' / ch²(u)
-                return DIV_(DL(node, var, table), POW_(CH_(CL(node)), NUM_(2)));
+                return DIV_(DL(node), POW_(CH_(CL(node)), NUM_(2)));
             }
         case CTH:
             {
                 // cth(u)' = -u' / sh²(u)
-                return DIV_(MUL_(NUM_(-1), DL(node, var, table)), POW_(SH_(CL(node)), NUM_(2)));
+                return DIV_(MUL_(NUM_(-1), DL(node)), POW_(SH_(CL(node)), NUM_(2)));
             }
         default:
             {
@@ -234,18 +189,18 @@ node_t* copyNode(node_t* originalNode)
 }
 
 
-bool containVariable(node_t* node, const char* var)
+bool containVariable(node_t* node)
 {
     if (node == NULL)
     {
         return false;
     }
 
-    if (node->type == VAR && strcmp(node->object.var, var) == 0)                // рекурсивно обходим ноды чтобы понять содержится ли переменная или нет
+    if (node->type == VAR && strcmp(node->object.var, "x") == 0)                // рекурсивно обходим ноды чтобы понять содержится ли переменная или нет
     {
         return true;
     }
-    return containVariable(node->left, var) || containVariable(node->right, var);
+    return containVariable(node->left) || containVariable(node->right);
 }
 
 

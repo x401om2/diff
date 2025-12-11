@@ -7,52 +7,54 @@
 #include "DSL.h"
 
 
-static const char* s = NULL;
-static VariableTable* current_table = NULL;
-
 // N - number ; E - expression ; T - term symbol ; Primary - выражение со скобками снаружи; F - function; Power - степень
 
-static void skipSpacesParser()
-{
-    if (s == NULL) return;
 
-    while (*s == ' ' || *s == '\n' || *s == '\t' || *s == '\r')
+static void skipSpacesParser(parserState* st)
+{
+    if (st == NULL || st->s == NULL)
     {
-        s++;
+        return;
     }
+
+    while (*st->s == ' ' || *st->s == '\n' || *st->s == '\t' || *st->s == '\r')
+    {
+        st->s++;
+    }
+
 }
 
 
-node_t* getNumber()
+node_t* getNumber(parserState* st)
 {
-    skipSpacesParser();
+    skipSpacesParser(st);
     double val = 0;
 
-    while ('0' <= *s && *s <= '9')
+    while ('0' <= *st->s && *st->s <= '9')
     {
-        val = (val * 10) + (*s - '0');
-        s++;
+        val = (val * 10) + (*st->s - '0');
+        st->s++;
     }
 
-    skipSpacesParser();
+    skipSpacesParser(st);
 
     return NUM_(val);
 }
 
 
-node_t* getExpression()                                             // отвечает за сложение и вычитание
+node_t* getExpression(parserState* st)              // отвечает за сложение и вычитание - создает узел с двумя getTerm() если по возвращ из первой getTerm встречает знак
 {
-    skipSpacesParser();
-    node_t* val = getTerm();
+    skipSpacesParser(st);
+    node_t* val = getTerm(st);
 
-    while (*s == '+' || *s == '-')
+    while (*st->s == '+' || *st->s == '-')
     {
-        char op = *s;
-        s++;
+        char op = *st->s;
+        st->s++;
 
-        skipSpacesParser();
+        skipSpacesParser(st);
+        node_t* val2 = getTerm(st);
 
-        node_t* val2 = getTerm();
         if (op == '+')
         {
             val = ADD_(val, val2);
@@ -63,74 +65,78 @@ node_t* getExpression()                                             // отве�
         }
     }
 
-    skipSpacesParser();
+    skipSpacesParser(st);
     return val;
 }
 
 
-node_t* getTerm()                                                   // отвечает за умножение и деление
+node_t* getTerm(parserState* st)                    // отвечает за умнож и деление
 {
-    skipSpacesParser();
-    node_t* val = getPower();
+    skipSpacesParser(st);
 
-    skipSpacesParser();
-    while (*s == '*' || *s == '/')
+    node_t* val = getPower(st);
+    skipSpacesParser(st);
+
+    while (*st->s == '*' || *st->s == '/')
     {
-        char op = *s;
-        s++;
+        char op = *st->s;
+        st->s++;
 
-        skipSpacesParser();
-        node_t* val2 = getPower();
+        skipSpacesParser(st);
+
+        node_t* val2 = getPower(st);
+
         if (op == '*')
         {
-            val = MUL_(val, val2);
+            val = MUL_(val,val2);
         }
         else
         {
             val = DIV_(val, val2);
         }
-        skipSpacesParser();
+        skipSpacesParser(st);
     }
 
-    skipSpacesParser();
+    skipSpacesParser(st);
     return val;
 }
 
 
-node_t* getPower()
+node_t* getPower(parserState* st)
 {
-    skipSpacesParser();
-    node_t* val = getPrimary();
+    skipSpacesParser(st);
+    node_t* val = getPrimary(st);
 
-    skipSpacesParser();
-    if (*s == '^')
+    skipSpacesParser(st);
+    if (*st->s == '^')
     {
-        s++;
-        skipSpacesParser();
+        st->s++;
+        skipSpacesParser(st);
 
-        node_t* exponent = getPower();
-        val = POW_(val, exponent);
+        node_t* exp = getPower(st);
+        val = POW_(val, exp);
     }
+    skipSpacesParser(st);
 
-    skipSpacesParser();
     return val;
 }
 
 
-node_t* getFunction()                                  // отвечает за индикаторы и функции
+
+node_t* getFunction(parserState* st)                                  // отвечает за индикаторы и функции
 {
-    skipSpacesParser();
+    skipSpacesParser(st);
 
     char funcName[MAX_NAME_LEN] = {0};
     int i = 0;
 
-    while (isalpha(*s))
+    while (isalpha(*st->s))
     {
-        funcName[i++] = *s;
-        s++;
+        funcName[i++] = *st->s;
+        st->s++;
     }
     funcName[i] = '\0';
-    skipSpacesParser();
+    skipSpacesParser(st);
 
     if (strcmp(funcName, "sin") == 0 || strcmp(funcName, "cos") == 0 ||
         strcmp(funcName, "tg") == 0 || strcmp(funcName, "ctg") == 0 ||
@@ -141,18 +147,17 @@ node_t* getFunction()                                  // отвечает за 
         strcmp(funcName, "th") == 0 || strcmp(funcName, "cth") == 0)
 
     {
-
-        if (*s == '(')
+        if (*st->s == '(')
         {
-            s++;
-            skipSpacesParser();
+            st->s++;
+            skipSpacesParser(st);
 
-            node_t* arg = getExpression();
+            node_t* arg = getExpression(st);                                                // после того как вернемся из E - будет ждать ')' - и создаст узел с полученной операцией
 
-            skipSpacesParser();
-            if (*s == ')')
+            skipSpacesParser(st);
+            if (*st->s == ')')
             {
-                s++;
+                st->s++;
             }
             else
             {
@@ -162,43 +167,43 @@ node_t* getFunction()                                  // отвечает за 
         }
     }
 
-    findVarInTable(current_table, funcName);
+    // либо если не операция - получается на вход поступила переменная
 
-    return VAR_(funcName);
+    return VAR_("x");
 }
 
 
-node_t* getPrimary()                                      // отвечает за первичные выражения
+node_t* getPrimary(parserState* st)                                      // отвечает за первичные выражения
 {
-    skipSpacesParser();
+    skipSpacesParser(st);
 
-    if (*s == '-')
+    if (*st->s == '-')
     {
-        s++;
-        skipSpacesParser();
+        st->s++;
+        skipSpacesParser(st);
 
-        node_t* val = getPrimary();
+        node_t* val = getPrimary(st);
         return MUL_(NUM_(-1), val);
     }
 
-    if (*s == '+')
+    if (*st->s == '+')
     {
-        s++;
-        skipSpacesParser();
-        return getPrimary();
+        st->s++;
+        skipSpacesParser(st);
+        return getPrimary(st);
     }
 
-    if (*s == '(')
+    if (*st->s == '(')
     {
-        s++;
-        skipSpacesParser();
+        st->s++;
+        skipSpacesParser(st);
 
-        node_t* val = getExpression();
+        node_t* val = getExpression(st);
 
-        skipSpacesParser();
-        if (*s == ')')
+        skipSpacesParser(st);
+        if (*st->s == ')')
         {
-            s++;
+            st->s++;
         }
         else
         {
@@ -206,34 +211,34 @@ node_t* getPrimary()                                      // отвечает з
         }
         return val;
     }
-    else if (isalpha(*s))
+    else if (isalpha(*st->s))
     {
-        return getFunction();
+        return getFunction(st);
     }
     else
     {
-        return getNumber();
+        return getNumber(st);
     }
 }
 
 
-node_t* getGrammar()                                                        // главная функция вызывающая - general
+node_t* getGrammar(parserState* st)                                                        // главная функция вызывающая - general
 {
-    skipSpacesParser();
-    node_t* val = getExpression();
+    skipSpacesParser(st);
+    node_t* val = getExpression(st);
 
-    skipSpacesParser();
+    skipSpacesParser(st);
 
-    if (*s != '$' && *s != '\0')
+    if (*st->s != '$' && *st->s != '\0')
     {
-        printf("ваырнинг бляттть: неожиданный символ '%c' в конце\n", *s);
+        printf("ваырнинг бляттть: неожиданный символ '%c' в конце\n", *st->s);
     }
 
     return val;
 }
 
 
-tree_t* loadMathTree(const char* filename, VariableTable* table)
+tree_t* loadMathTree(const char* filename)                                              //VariableTable* table
 {
     FILE* file = fopen(filename, "r");
 
@@ -253,30 +258,32 @@ tree_t* loadMathTree(const char* filename, VariableTable* table)
 
     if (bytes_read != file_size)
     {
-        printf("Ошибка чтения файла\n");
+        printf("ашибка чтения файла\n");
         free(buffer);
         return NULL;
     }
 
     buffer[file_size] = '\0';
 
-    s = buffer;                             // как раз то что сверху задали static const - изменяем здесь
-    current_table = table;
+
+    parserState st = {
+        .s = buffer,
+    };
 
     tree_t* tree = treeCtor();
 
     if (tree == NULL)
     {
-        printf("Ошибка: не удалось создать дерево\n");
+        printf("еррор емае не удалось создать дерево\n");
         free(buffer);
         return NULL;
     }
 
-    tree->root = getGrammar();
+    tree->root = getGrammar(&st);
 
     if (tree->root == NULL)
     {
-        printf("Ошибка: не удалось распарсить выражение\n");
+        printf("ошибочка не удалось распарсить выражение\n");
         free(buffer);
         free(tree);
         return NULL;

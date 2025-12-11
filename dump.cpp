@@ -8,7 +8,10 @@ const char* getNodeValueString(const node_t* node)
 {
     static char buffer[MAX_NAME_LEN] = {0};
 
-    if (node == NULL) return "NULL";
+    if (node == NULL)
+    {
+        return "NULL";
+    }
 
     switch (node->type) {
         case NUM:
@@ -86,7 +89,6 @@ void generateDotNodes(FILE* dotFile, const node_t* node, int* nodeCounter)
         generateDotNodes(dotFile, node->left, nodeCounter);
         fprintf(dotFile, "    node%d -> node%d [label=\"left\"];\n", currentId, leftId);
     }
-
     if (node->right != NULL)
     {
         int rightId = *nodeCounter;

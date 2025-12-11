@@ -7,71 +7,40 @@
 #include <stdio.h>
 #include <string.h>
 
-
 int main(int argc, char* argv[])
 {
     initMathDebugHTM();
-    const char* inputFilename = "text.txt";                             // значение по умолчанию
 
+    const char* inputFilename = "text.txt";
     if (argc > 1)
     {
         inputFilename = argv[1];
     }
 
-    printf("обработка файла: %s\n", inputFilename);
+    printf("обрабатываем файлик: %s\n", inputFilename);
 
-    VariableTable table = {0};
-    initVariableTable(&table, COUNT_OF_VARIABLES);
-
-    tree_t* tree = loadMathTree(inputFilename, &table);
-
+    tree_t* tree = loadMathTree(inputFilename);
     if (tree == NULL || tree->root == NULL)
     {
-        printf("не удалось загрузить дерево из файла %s\n", inputFilename);
+        printf("не получилось грузануть дерево из файлика - %s\n", inputFilename);
         return 1;
     }
 
-    for (int i = 0; i < table.count; i++)                               // для всех переменных внутри считываемого текстовика
-    {
-        printf("введите значение для %s: ", table.variables[i].name);
-        scanf("%lf", &table.variables[i].value);
-        table.variables[i].isDefined = true;
-    }
+    double valueOfX = 0;
 
-    float plotMinX = -5.0;
-    float plotMaxX = 5.0;
+    getVariableValues(&valueOfX);
 
-    printf("Введите минимальный x (по умолчанию %.2f): ", plotMinX);
+    float plotMinX = 0, plotMaxX = 0;
+    getPlotRangeFromUser(&plotMinX, &plotMaxX);
 
-    if (scanf("%f", &plotMinX) != 1)
-    {
-        plotMinX = -5.0;
-    }
+    createComprehensiveReport(tree, "comprehensive_report.tex", plotMinX, plotMaxX , valueOfX);
 
-    printf("Введите максимальный x (по умолчанию %.2f): ", plotMaxX);
-
-    if (scanf("%f", &plotMaxX) != 1)
-    {
-        plotMaxX = 5.0;
-    }
-
-    if (plotMinX >= plotMaxX)
-    {
-        printf("пиздец. минимальное значение должно быть меньше максимального.\n");
-        printf("Используются значения по умолчанию (-5, 5).\n");
-        plotMinX = -5.0;
-        plotMaxX = 5.0;
-    }
-
-    createComprehensiveReport(tree, &table, "comprehensive_report.tex", plotMinX, plotMaxX);        // comprehensive - всесторонний report
-
-    system("pdflatex -interaction=nonstopmode comprehensive_report.tex");       // вызывает комп латех для генерации файла
+    system("pdflatex -interaction=nonstopmode comprehensive_report.tex");
 
     printf("\nPDF отчет сохранен как comprehensive_report.pdf\n");
 
     treeRecursiveDelete(tree->root);
     free(tree);
-    deleteTable(&table);
 
     return 0;
 }

@@ -54,7 +54,8 @@ bool needsParenthesesForOp(node_t* node, int parentPriority)                // �
     return currentPriority < parentPriority;    // скобки нужны - если приоритет текущей операции ниже приоритета родительской операции
 }
 
-void nodeToLatexWithPriority(node_t* node, FILE* tex_file, int parentPriority)      // дерево -> laTex с уч приоритетов
+
+void nodeToLatexWithPriority(node_t* node, FILE* texFile, int parentPriority)      // дерево -> laTex с уч приоритетов
 {
     if (node == NULL)
     {
@@ -63,10 +64,10 @@ void nodeToLatexWithPriority(node_t* node, FILE* tex_file, int parentPriority)  
 
     switch (node->type) {
         case NUM:
-            fprintf(tex_file, "%g", node->object.constant);                         // просто печатаем числа и переменные напрямую
+            fprintf(texFile, "%g", node->object.constant);                         // просто печатаем числа и переменные напрямую
             break;
         case VAR:
-            fprintf(tex_file, "%s", node->object.var);
+            fprintf(texFile, "%s", node->object.var);
             break;
         case OP:
 
@@ -74,202 +75,195 @@ void nodeToLatexWithPriority(node_t* node, FILE* tex_file, int parentPriority)  
 
             if (needsParens)
             {
-                fprintf(tex_file, "\\left(");
+                fprintf(texFile, "\\left(");
             }
 
             switch (node->object.operation) {                                       // рекурсивно все делаем как обычно
                 case ADD:
-                    nodeToLatexWithPriority(node->left, tex_file, 1);               // для +  выводим рекурсивно и левую и правую часть с приоритетом 1
-                    fprintf(tex_file, " + ");
-                    nodeToLatexWithPriority(node->right, tex_file, 1);
+                    nodeToLatexWithPriority(node->left, texFile, 1);               // для +  выводим рекурсивно и левую и правую часть с приоритетом 1
+                    fprintf(texFile, " + ");
+                    nodeToLatexWithPriority(node->right, texFile, 1);
                     break;
 
                 case SUB:
-                    nodeToLatexWithPriority(node->left, tex_file, 1);
-                    fprintf(tex_file, " - ");
-                    nodeToLatexWithPriority(node->right, tex_file, 1);
+                    nodeToLatexWithPriority(node->left, texFile, 1);
+                    fprintf(texFile, " - ");
+                    nodeToLatexWithPriority(node->right, texFile, 1);
                     break;
 
                 case MUL:
-                    nodeToLatexWithPriority(node->left, tex_file, 2);
-                    fprintf(tex_file, " \\cdot ");
-                    nodeToLatexWithPriority(node->right, tex_file, 2);
+                    nodeToLatexWithPriority(node->left, texFile, 2);
+                    fprintf(texFile, " \\cdot ");
+                    nodeToLatexWithPriority(node->right, texFile, 2);
                     break;
 
                 case DIV:
-                    fprintf(tex_file, "\\frac{");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "}{");
-                    nodeToLatexWithPriority(node->right, tex_file, 0);
-                    fprintf(tex_file, "}");
+                    fprintf(texFile, "\\frac{");
+                    nodeToLatexWithPriority(node->left, texFile, 0);              // приоритет 0 => всегда без скобок
+                    fprintf(texFile, "}{");
+                    nodeToLatexWithPriority(node->right, texFile, 0);
+                    fprintf(texFile, "}");
                     break;
 
                 case SIN:
-                    fprintf(tex_file, "\\sin\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\sin\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case COS:
-                    fprintf(tex_file, "\\cos\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\cos\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case TG:
-                    fprintf(tex_file, "\\tan\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\tan\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case CTG:
-                    fprintf(tex_file, "\\ctg\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\ctg\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case ARCSIN:
-                    fprintf(tex_file, "\\arcsin\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\arcsin\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case ARCCOS:
-                    fprintf(tex_file, "\\arccos\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\arccos\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case ARCTG:
-                    fprintf(tex_file, "\\arctg\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\arctg\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case ARCCTG:
-                    fprintf(tex_file, "\\arcctg\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\arcctg\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case LN:
-                    fprintf(tex_file, "\\ln\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\ln\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case RAIZE:
                     if (node->left && (node->left->type == VAR || (node->left->type == NUM && node->left->object.constant >= 0)))
                     {
-                        nodeToLatexWithPriority(node->left, tex_file, 3);
+                        nodeToLatexWithPriority(node->left, texFile, 3);
                     }
                     else
                     {
-                        fprintf(tex_file, "\\left(");
-                        nodeToLatexWithPriority(node->left, tex_file, 0);
-                        fprintf(tex_file, "\\right)");
+                        fprintf(texFile, "\\left(");
+                        nodeToLatexWithPriority(node->left, texFile, 0);
+                        fprintf(texFile, "\\right)");
                     }
-                    fprintf(tex_file, "^{");
-                    nodeToLatexWithPriority(node->right, tex_file, 0);
-                    fprintf(tex_file, "}");
+                    fprintf(texFile, "^{");
+                    nodeToLatexWithPriority(node->right, texFile, 0);
+                    fprintf(texFile, "}");
                     break;
 
                 case SQRT:
-                    fprintf(tex_file, "\\sqrt{");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "}");
+                    fprintf(texFile, "\\sqrt{");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "}");
                     break;
 
                 case SH:
-                    fprintf(tex_file, "\\sinh\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\sinh\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case CH:
-                    fprintf(tex_file, "\\cosh\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\cosh\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case TH:
-                    fprintf(tex_file, "\\tanh\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\tanh\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case CTH:
-                    fprintf(tex_file, "\\coth\\left(");
-                    nodeToLatexWithPriority(node->left, tex_file, 0);
-                    fprintf(tex_file, "\\right)");
+                    fprintf(texFile, "\\coth\\left(");
+                    nodeToLatexWithPriority(node->left, texFile, 0);
+                    fprintf(texFile, "\\right)");
                     break;
 
                 case HZ_OPERATION:
                 default:
-                    fprintf(tex_file, "?");
+                    fprintf(texFile, "?");
                     break;
             }
 
-            if (needsParens) fprintf(tex_file, "\\right)");             // если была открывающая то нужна и закрывающая
+            if (needsParens) fprintf(texFile, "\\right)");             // если была открывающая то нужна и закрывающая
             break;
     }
 }
 
 
-void nodeToLatex(node_t* node, FILE* tex_file)
+void nodeToLatex(node_t* node, FILE* texFile)
 {
-    nodeToLatexWithPriority(node, tex_file, 0);                     // начало с приоритетом 0
+    nodeToLatexWithPriority(node, texFile, 0);                     // начало с приоритетом 0
 }
 
 
-void formulaToLatex(tree_t* tree, FILE* tex_file, const char* title)    // просто формула
+void formulaToLatex(tree_t* tree, FILE* texFile, const char* title)    // просто формула
 {
     if (title && title[0] != '\0')
     {
-        fprintf(tex_file, "\\subsection*{%s}\n", title);
+        fprintf(texFile, "\\subsection*{%s}\n", title);
     }
-    fprintf(tex_file, "\\begin{dmath}\n");
-    nodeToLatex(tree->root, tex_file);
-    fprintf(tex_file, "\n\\end{dmath}\n\n");
+    fprintf(texFile, "\\begin{dmath}\n");
+    nodeToLatex(tree->root, texFile);
+    fprintf(texFile, "\n\\end{dmath}\n\n");
 }
 
 
-void formulaWithComputationToLatex(tree_t* tree, VariableTable* table, FILE* tex_file, const char* title)   // формула и численное значение
+void formulaWithComputationToLatex(tree_t* tree, double valueOfX, FILE* texFile, const char* title)   // формула и численное значение
 {
-    formulaToLatex(tree, tex_file, title);
+    formulaToLatex(tree, texFile, title);
 
-    double result = countingTree(tree->root, table);
-    fprintf(tex_file, "Результат: \\[%.4f\\]\n\n", result);
+    double result = countingTree(tree->root, valueOfX);
+    fprintf(texFile, "Результат: \\[%.4f\\]\n\n", result);
 }
 
 
-void variablesTableToLatex(VariableTable* table, FILE* tex_file)
+void variablesTableToLatex(FILE* texFile, double valueOfX)
 {
-    fprintf(tex_file,
+    fprintf(texFile,
         "\\begin{tabular}{|c|c|}\n"                 // таблица с двумя колонками и вертик линиями
         "\\hline\n"
         "Переменная & Значение \\\\\n"
         "\\hline\n");
 
-    for (int i = 0; i < table->count; i++)
-    {
-        if (table->variables[i].isDefined)                          // если определена переменная и имеет значение
-        {
-            fprintf(tex_file, "$%s$ & $%.2f$ \\\\\n", table->variables[i].name, table->variables[i].value);
-        }
-    }
-    fprintf(tex_file,
+    fprintf(texFile, "$%s$ & $%.2f$ \\\\\n", "x", valueOfX);
+    fprintf(texFile,
         "\\hline\n"
         "\\end{tabular}\n\n");
 }
 
 
-
-void createComprehensiveReport(tree_t* original, VariableTable* table, const char* filename,  float plotMinX, float plotMaxX)
+void createComprehensiveReport(tree_t* original, const char* filename,  float plotMinX, float plotMaxX, double valueOfX)                                 //VariableTable* table
 {
-    FILE* tex_file = fopen(filename, "w");
+    FILE* texFile = fopen(filename, "w");
 
-    if (!tex_file)
+    if (!texFile)
     {
         printf("не сделали файл %s\n", filename);
         return;
@@ -278,234 +272,180 @@ void createComprehensiveReport(tree_t* original, VariableTable* table, const cha
     tree_t* simplified = NULL;
     tree_t* derivative = NULL;
 
-    double original_value = 0;
-    double simplified_value = 0;
-    double derivative_value = 0;
+    double originalValue = 0;
+    double simplifiedValue = 0;
+    double derivativeValue = 0;
 
-    writeLaTeXPreamble(tex_file);                       // заголовочек
-    writeTitleAndTOC(tex_file);
+    writeLaTeXPreamble(texFile);                                            // заголовочек
+    writeTitleAndTOC(texFile);
 
-    original_value = writeOriginalDataSection(original, table, tex_file);   // исходные данные
+    originalValue = writeOriginalDataSection(original, texFile, valueOfX);     // исходные данные
 
-    simplified = writeSimplificationSection(original, table, tex_file, &simplified_value, plotMinX , plotMaxX);  // упрощаем исходное
+    simplified = writeSimplificationSection(original, texFile, &simplifiedValue, plotMinX , plotMaxX, valueOfX);  // упрощаем исходное
 
-    if (simplified != NULL && simplified->root != NULL)         // если упростили - берем производную
+    if (simplified != NULL && simplified->root != NULL)                     // если упростили - берем производную
     {
-        derivative = writeDerivativeSection(simplified, table, tex_file, &derivative_value, plotMinX, plotMaxX);
+        derivative = writeDerivativeSection(simplified, texFile, &derivativeValue, plotMinX, plotMaxX, valueOfX);
     }
 
-    if (simplified != NULL && derivative != NULL)                // полученные результаты
+    if (simplified != NULL && derivative != NULL)                           // полученные результаты
     {
-        writeFinalResultsSection(simplified, derivative, table, tex_file, simplified_value, derivative_value);
+        writeFinalResultsSection(simplified, derivative, texFile, simplifiedValue, derivativeValue, valueOfX);
     }
 
-    writeSummaryTable(original, simplified, derivative, table, tex_file, original_value, simplified_value, derivative_value);       // итоговая таблица значений
-
-    writeLaTeXFooter(tex_file);                             // закрываем документ
-    fclose(tex_file);
+    writeLaTeXFooter(texFile);                                              // закрываем документ
+    fclose(texFile);
 
     cleanupTrees(simplified, derivative);
 }
 
-
-void writeLaTeXPreamble(FILE* tex_file)
+double writeOriginalDataSection(tree_t* original, FILE* texFile, double valueOfX)
 {
-    fprintf(tex_file,
-        "\\documentclass{article}\n"
-        "\\usepackage[utf8]{inputenc}\n"
-        "\\usepackage{amsmath}\n"
-        "\\usepackage{breqn}\n"
-        "\\usepackage[russian]{babel}\n"
-        "\\usepackage{geometry}\n"
-        "\\usepackage{pgfplots}\n"
-        "\\pgfplotsset{compat=1.18}\n"
-        "\\geometry{a4paper, left=20mm, right=20mm, top=20mm, bottom=20mm}\n"     // поля со всех сторон по 20мм
-        "\\setlength{\\parindent}{0pt}\n"                                         // без отступа у -красной- строки
-        "\\setlength{\\parskip}{1em}\n");                                           // отступ между абзацами
-}
-
-void writeTitleAndTOC(FILE* tex_file)
-{
-    fprintf(tex_file,
-        "\\title{Математический отчет}\n"
-        "\\author{ЯРИК}\n"
-        "\\date{\\today}\n"
-        "\\begin{document}\n"
-        "\\maketitle\n"                        // генерит титульную страницу
-        "\\tableofcontents\n"
-        "\\newpage\n");                           // нов страница
-}
-
-double writeOriginalDataSection(tree_t* original, VariableTable* table, FILE* tex_file)
-{
-    fprintf(tex_file,
+    fprintf(texFile,
         "\\section{Исходные данные}\n\n"                                        // section раздел автоматически нумеруется
         "\\subsection{Исходное выражение}\n"
         "\\begin{dmath}\n");
-    nodeToLatex(original->root, tex_file);
 
-    fprintf(tex_file,
-        "\n\\end{dmath}\n\n"
-        "\\subsection{Таблица переменных}\n\n");
+    nodeToLatex(original->root, texFile);
 
-    variablesTableToLatex(table, tex_file);
+    fprintf(texFile,
+        "\n\\end{dmath}\n\n");
 
-    double original_result = countingTree(original->root, table);
 
-    fprintf(tex_file, "Значение исходного выражения: \\[%.4f\\]\n\n", original_result);
+    double originalResult = countingTree(original->root, valueOfX);
 
-    return original_result;
+    fprintf(texFile, "Значение исходного выражения: \\[%.4f\\]\n\n", originalResult);
+
+    return originalResult;
 }
 
-tree_t* writeSimplificationSection(tree_t* original, VariableTable* table, FILE* tex_file, double* simplified_value, float plotMinX, float plotMaxX)
+tree_t* writeSimplificationSection(tree_t* original, FILE* texFile, double* simplifiedValue, float plotMinX, float plotMaxX, double valueOfX)
 {
-    fprintf(tex_file, "\\section{Упрощение выражения}\n\n");
+    fprintf(texFile, "\\section{Упрощение выражения}\n\n");
 
     tree_t* simplified = treeCtor();
     if (!simplified)
     {
-        fprintf(tex_file, "\\textbf{не получилось сделать дерево для упрощения}\n\n");
+        fprintf(texFile, "\\textbf{не получилось сделать дерево для упрощения}\n\n");
         return NULL;
     }
 
     simplified->root = copyNode(original->root);
     if (!simplified->root)
     {
-        fprintf(tex_file, "\\textbf{не получилось скопировать дерево}\n\n");
+        fprintf(texFile, "\\textbf{не получилось скопировать дерево}\n\n");
         free(simplified);
         return NULL;
     }
 
-    fprintf(tex_file, "\\subsection{Поэтапное упрощение}\n\n");
-    simplified->root = simplification(simplified->root, simplified, tex_file);
+    fprintf(texFile, "\\subsection{Поэтапное упрощение}\n\n");
+    simplified->root = simplification(simplified->root, simplified, texFile);
 
-    fprintf(tex_file,
+    fprintf(texFile,
         "\\subsection{Финальное упрощенное выражение}\n"
         "\\begin{dmath}\n");
 
-    nodeToLatex(simplified->root, tex_file);
-    fprintf(tex_file, "\n\\end{dmath}\n\n");
+    nodeToLatex(simplified->root, texFile);
+    fprintf(texFile, "\n\\end{dmath}\n\n");
 
-    *simplified_value = countingTree(simplified->root, table);
+    *simplifiedValue = countingTree(simplified->root, valueOfX);
 
-    fprintf(tex_file,
+    fprintf(texFile,
         "Значение упрощенного выражения: \\[%.4f\\]\n\n"
         "\\subsection{График упрощенной функции}\n",
-        *simplified_value);
+        *simplifiedValue);
 
-    float step = (plotMaxX - plotMinX) / 100.0;
+    float step = (plotMaxX - plotMinX) / 1000.0;
 
-    addPlotToLatexDirect(simplified, table, tex_file, plotMinX, plotMaxX, step);                      // снова графичек - теперь упрощенной функции
+    addPlotToLatexDirect(simplified, texFile, plotMinX, plotMaxX, step, valueOfX);                      // снова графичек - теперь упрощенной функции
 
     return simplified;
 }
 
-tree_t* writeDerivativeSection(tree_t* simplified, VariableTable* table, FILE* tex_file, double* derivative_value, float plotMinX, float plotMaxX)
+tree_t* writeDerivativeSection(tree_t* simplified, FILE* texFile, double* derivativeValue, float plotMinX, float plotMaxX, double valueOfX)
 {
-    fprintf(tex_file, "\\section{Производная по переменной $x$}\n\n");
+    fprintf(texFile, "\\section{Производная по переменной $x$}\n\n");
 
-    tree_t* derivative = diffTree(simplified, table, "x");
+    tree_t* derivative = diffTree(simplified);
 
     if (derivative == NULL || derivative->root == NULL)
     {
-        fprintf(tex_file, "\\textbf{не получилось вычислить производную}\n\n");
+        fprintf(texFile, "\\textbf{не получилось вычислить производную}\n\n");
         return NULL;
     }
 
-    fprintf(tex_file,
+    fprintf(texFile,
         "\\subsection{Исходная производная}\n"
         "\\begin{dmath}\n");
 
-    nodeToLatex(derivative->root, tex_file);
+    nodeToLatex(derivative->root, texFile);
 
-    fprintf(tex_file,
+    fprintf(texFile,
         "\n\\end{dmath}\n\n"
         "\\subsection{Упрощенная производная}\n");
 
-    derivative->root = simplification(derivative->root, derivative, tex_file);
-    fprintf(tex_file, "\\begin{dmath}\n");
-    nodeToLatex(derivative->root, tex_file);
-    fprintf(tex_file, "\n\\end{dmath}\n\n");
+    derivative->root = simplification(derivative->root, derivative, texFile);
+    fprintf(texFile, "\\begin{dmath}\n");
+    nodeToLatex(derivative->root, texFile);
+    fprintf(texFile, "\n\\end{dmath}\n\n");
 
-    *derivative_value = countingTree(derivative->root, table);
-    fprintf(tex_file,
+    *derivativeValue = countingTree(derivative->root, valueOfX);
+    fprintf(texFile,
         "Значение производной: \\[%.4f\\]\n\n"
         "\\subsection{График производной}\n",
-        *derivative_value);
+        *derivativeValue);
 
-    float step = (plotMaxX - plotMinX) / 100.0;
-    addPlotToLatexDirect(derivative, table, tex_file, plotMinX, plotMaxX, step);                       // графичек производной
+    float step = (plotMaxX - plotMinX) / 1000.0;
+    addPlotToLatexDirect(derivative, texFile, plotMinX, plotMaxX, step, valueOfX);                       // графичек производной
 
     return derivative;
 }
 
-void writeFinalResultsSection(tree_t* simplified, tree_t* derivative, VariableTable* table, FILE* tex_file, double simplified_value, double derivative_value)
+
+void writeFinalResultsSection(tree_t* simplified, tree_t* derivative, FILE* texFile, double simplifiedValue, double derivativeValue, double valueOfX)
 {
-    fprintf(tex_file,
-        "\\section{Финальные результаты}\n\n"
-        "\\subsection{Упрощенное выражение и его производная}\n"
-        "\\begin{align*}\n"
-        "f(x) &= ");
+    double xValue = valueOfX;
 
-    nodeToLatex(simplified->root, tex_file);
-
-    fprintf(tex_file,
-        " \\\\\n"
-        "\\frac{d}{dx} &= ");
-
-    nodeToLatex(derivative->root, tex_file);
-    fprintf(tex_file, "\n\\end{align*}\n\n");
-
-    double x_value = 0.0;
-    if (table->count > 0 && table->variables[0].isDefined)
-    {
-        x_value = table->variables[0].value;
-    }
-
-    fprintf(tex_file,
+    fprintf(texFile,
         "\\begin{itemize}\n"
         "\\item Значение упрощенного выражения: $f(%.2f) = %.4f$\n"
         "\\item Значение производной: $f'(%.2f) = %.4f$\n"
         "\\end{itemize}\n\n",
-        x_value, simplified_value, x_value, derivative_value);
+        xValue, simplifiedValue, xValue, derivativeValue);
+
+    fprintf(texFile,
+        "\\section{Финальные результаты}\n\n"
+        "\\subsection{Упрощенное выражение и его производная}\n"
+        "\\begin{align*}\n"
+        "f(x) &= ");
+    nodeToLatex(simplified->root, texFile);
+
+    fprintf(texFile,
+        " \\\\\n"
+        "\\frac{d}{dx} &= ");
+
+    nodeToLatex(derivative->root, texFile);
+    fprintf(texFile, "\n\\end{align*}\n\n");
 }
 
-void writeSummaryTable(tree_t* original, tree_t* simplified, tree_t* derivative, VariableTable* table, FILE* tex_file, double original_value, double simplified_value, double derivative_value)
-{
-    fprintf(tex_file,
-        "\\section{Итоговая таблица}\n\n"
-        "\\begin{tabular}{|l|c|}\n"
-        "\\hline\n"
-        "Параметр & Значение \\\\\n"
-        "\\hline\n"
-        "Исходное выражение & $%.4f$ \\\\\n"
-        "Упрощенное выражение & $%.4f$ \\\\\n",
-        original_value, simplified_value);
 
-    if (derivative != NULL && derivative->root != NULL)
-    {
-        fprintf(tex_file, "Производная по $x$ & $%.4f$ \\\\\n", derivative_value);
-    }
-    else
-    {
-        fprintf(tex_file, "Производная по $x$ & не вычислена \\\\\n");
-    }
 
-    fprintf(tex_file, "Размер исходного дерева & %d узлов \\\\\n", countTreeSize(original->root));
 
-    if (simplified != NULL && simplified->root != NULL)
-    {
-        fprintf(tex_file, "Размер упрощенного дерева & %d узлов \\\\\n", countTreeSize(simplified->root));
-    }
-    else
-    {
-        fprintf(tex_file, "Размер упрощенного дерева & не определен \\\\\n");
-    }
 
-    fprintf(tex_file,
-        "\\hline\n"
-        "\\end{tabular}\n");
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void cleanupTrees(tree_t* simplified, tree_t* derivative)
 {
@@ -528,7 +468,42 @@ void cleanupTrees(tree_t* simplified, tree_t* derivative)
     }
 }
 
-void writeLaTeXFooter(FILE* tex_file)
+
+
+
+
+
+
+void writeLaTeXFooter(FILE* texFile)
 {
-    fprintf(tex_file, "\\end{document}\n");
+    fprintf(texFile, "\\end{document}\n");
+}
+
+
+void writeLaTeXPreamble(FILE* texFile)
+{
+    fprintf(texFile,
+        "\\documentclass{article}\n"
+        "\\usepackage[utf8]{inputenc}\n"
+        "\\usepackage{amsmath}\n"
+        "\\usepackage{breqn}\n"
+        "\\usepackage[russian]{babel}\n"
+        "\\usepackage{geometry}\n"
+        "\\usepackage{pgfplots}\n"
+        "\\pgfplotsset{compat=1.18}\n"
+        "\\geometry{a4paper, left=20mm, right=20mm, top=20mm, bottom=20mm}\n"     // поля со всех сторон по 20мм
+        "\\setlength{\\parindent}{0pt}\n"                                         // без отступа у -красной- строки
+        "\\setlength{\\parskip}{1em}\n");                                           // отступ между абзацами
+}
+
+void writeTitleAndTOC(FILE* texFile)
+{
+    fprintf(texFile,
+        "\\title{Математический отчет}\n"
+        "\\author{ЯРИК}\n"
+        "\\date{\\today}\n"
+        "\\begin{document}\n"
+        "\\maketitle\n"                        // генерит титульную страницу
+        "\\tableofcontents\n"
+        "\\newpage\n");                           // нов страница
 }
